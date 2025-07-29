@@ -1,0 +1,1 @@
+## FPL GAFFER - Agentic AI Tool for FPL Squad Management
