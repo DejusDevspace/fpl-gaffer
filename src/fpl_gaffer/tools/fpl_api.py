@@ -9,4 +9,10 @@ class FPLOfficialAPI:
 
     async def get_bootstrap_data(self) -> Dict:
         """Get basic FPL data including gameweeks, teams, players, chips..."""
-        pass
+        try:
+            response = await self.session.get("{}/boostrap-static/".format(self.base_url))
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            print("Error fetching bootstrap data: {}".format(e))
+            return {}
