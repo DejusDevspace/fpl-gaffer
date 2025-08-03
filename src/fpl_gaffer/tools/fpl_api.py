@@ -16,3 +16,7 @@ class FPLOfficialAPI:
         except Exception as e:
             print("Error fetching bootstrap data: {}".format(e))
             return {}
+
+    async def get_gameweek_data(self) -> Dict:
+        """Get info for the current gameweek and deadline"""
+        pass
