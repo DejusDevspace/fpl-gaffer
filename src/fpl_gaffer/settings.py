@@ -15,4 +15,6 @@ class Settings(BaseSettings):
     # FPL API settings
     fpl_api_base_url: str = "https://fantasy.premierleague.com/api"
 
+    # FPL News Searcher settings
+
 settings = Settings()
