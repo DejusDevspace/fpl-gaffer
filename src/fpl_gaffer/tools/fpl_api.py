@@ -10,7 +10,7 @@ class FPLOfficialAPI:
     async def get_bootstrap_data(self) -> Dict:
         """Get basic FPL data including gameweeks, teams, players, chips..."""
         try:
-            response = await self.session.get("{}/boostrap-static/".format(self.base_url))
+            response = await self.session.get("{}/bootstrap-static/".format(self.base_url))
             response.raise_for_status()
             return response.json()
         except Exception as e:
@@ -19,7 +19,7 @@ class FPLOfficialAPI:
 
     async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline."""
-        bootstrap_data = self.get_bootstrap_data()
+        bootstrap_data = await self.get_bootstrap_data()
         if not bootstrap_data:
             return {}
 
