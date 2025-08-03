@@ -16,5 +16,6 @@ class Settings(BaseSettings):
     fpl_api_base_url: str = "https://fantasy.premierleague.com/api"
 
     # FPL News Searcher settings
+    TAVILY_API_KEY: str
 
 settings = Settings()
