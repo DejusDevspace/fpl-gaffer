@@ -1,10 +1,10 @@
 import httpx
 from typing import Dict
-
+from fpl_gaffer.settings import settings
 
 class FPLOfficialAPI:
     def __init__(self):
-        self.base_url = "https://fantasy.premierleague.com/api"
+        self.base_url = settings.fpl_api_base_url
         self.session = httpx.AsyncClient()
 
     async def get_bootstrap_data(self) -> Dict:
