@@ -19,4 +19,18 @@ class FPLOfficialAPI:
 
     async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline"""
-        pass
+        bootstrap_data = self.get_bootstrap_data()
+        if not bootstrap_data:
+            return {}
+
+        current_gw = None
+        for gw in bootstrap_data.get("events", []):
+            if gw["is_current"]:
+                current_gw = gw
+                break
+
+        return {
+            "gameweek": current_gw.get("id") if current_gw else None,
+            "deadline": current_gw.get("deadline_time") if current_gw else None,
+            "finished": current_gw.get("finished") if current_gw else False,
+        }
