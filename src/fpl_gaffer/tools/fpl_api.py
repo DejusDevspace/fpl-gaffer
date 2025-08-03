@@ -1,3 +1,7 @@
+import httpx
+
+
 class FPLOfficialAPI:
     def __init__(self):
-        pass
+        self.base_url = "https://fantasy.premierleague.com/api"
+        self.session = httpx.AsyncClient()
