@@ -17,3 +17,15 @@ class FPLNewsSearcher:
 
         # Alternative search tool using DuckDuckGo (if tavily is not available)
         self.ddg = DuckDuckGoSearchRun()
+
+    async def search_injury_news(self):
+        """Search for FPL injury news."""
+        pass
+
+    async def search_team_news(self):
+        """Search for premier league teams news."""
+        pass
+
+    async def search_fpl_news(self):
+        """Search for FPL news and tips."""
+        pass
