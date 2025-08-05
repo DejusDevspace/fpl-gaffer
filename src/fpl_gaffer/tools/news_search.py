@@ -5,6 +5,10 @@ from typing import Optional, List, Dict
 from langchain.schema import Document
 from langchain.document_loaders import UnstructuredURLLoader
 from asyncio import to_thread
+from dotenv import load_dotenv
+
+#  Load environment variables
+_ = load_dotenv()
 
 
 class FPLNewsSearcher:
