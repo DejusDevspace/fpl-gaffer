@@ -32,19 +32,19 @@ class FPLNewsSearcher:
 
     async def search_news(self) -> List[Document]:
         """Core function to search for all news."""
-        self._search_injury_news()
-        self._search_team_news()
-        self._search_fpl_news()
+        await self._search_injury_news()
+        await self._search_team_news()
+        await self._search_fpl_news()
         return self.news_docs
 
-    async def _search_injury_news(self):
+    async def _search_injury_news(self) -> None:
         """Search for FPL injury news."""
         pass
 
-    async def _search_team_news(self):
+    async def _search_team_news(self) -> None:
         """Search for premier league teams news."""
         pass
 
-    async def _search_fpl_news(self):
+    async def _search_fpl_news(self) -> None:
         """Search for FPL news and tips."""
         pass
