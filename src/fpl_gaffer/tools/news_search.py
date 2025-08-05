@@ -65,6 +65,7 @@ class FPLNewsSearcher:
                 loader = UnstructuredURLLoader(urls=urls)
                 loaded_docs = await to_thread(loader.load)
 
+                # Update documents' metadata
                 for i, d in enumerate(loaded_docs):
                     d.metadata.update({
                         "source": urls[i],
