@@ -17,5 +17,8 @@ class Settings(BaseSettings):
 
     # FPL News Searcher settings
     TAVILY_API_KEY: str
+    tavily_search_depth: str = "advanced"
+    tavily_max_search_results: int = 3
+    tavily_search_topic: str = "news"
 
 settings = Settings()

@@ -1,9 +1,10 @@
 import os
 from tavily import TavilyClient
-from langchain_community.tools.ddg_search import DuckDuckGoSearchRun
 from fpl_gaffer.settings import settings
-from typing import Optional, List
+from typing import Optional, List, Dict
 from langchain.schema import Document
+from langchain.document_loaders import UnstructuredURLLoader
+from asyncio import to_thread
 
 
 class FPLNewsSearcher:
@@ -37,14 +38,60 @@ class FPLNewsSearcher:
         await self._search_fpl_news()
         return self.news_docs
 
+    async def _search(self, query: str) -> Dict:
+        return self.client.search(
+            query=query,
+            search_depth=settings.tavily_search_depth,
+            max_results=settings.tavily_max_search_results,
+            topic=settings.tavily_search_topic,
+            include_raw_content=False
+        )
+
+    async def _search_and_load_docs(self, queries: List[str], category: str = None) -> None:
+        """Search for news from queries and loads them into the news documents."""
+        for query in queries:
+            # Get the tavily api search results for each query
+            response = await self._search(query)
+
+            # Get the urls from the search results
+            urls = [result["url"] for result in response.get("results", []) if "url" in result]
+
+            if urls:
+                # Fetch and parse the content from each URL
+                loader = UnstructuredURLLoader(urls=urls)
+                loaded_docs = await to_thread(loader.load)
+
+                for i, d in enumerate(loaded_docs):
+                    d.metadata.update({
+                        "source": urls[i],
+                        "query": query,
+                        "category": category
+                    })
+
+                # Extend the news_docs list with the new documents
+                self.news_docs.extend(loaded_docs)
+
     async def _search_injury_news(self) -> None:
         """Search for FPL injury news."""
-        pass
+        await self._search_and_load_docs([
+            "Premier League team news injury reports press conference updates",
+            "FPL injury doubts and confirmed player absences",
+            "Fantasy Premier League player injuries and suspensions"
+        ], category="injury")
 
     async def _search_team_news(self) -> None:
         """Search for premier league teams news."""
-        pass
+        await self._search_and_load_docs([
+            "Fantasy Premier League benching risks and squad news",
+            "FPL rotation risk players starting XI updates",
+        ], category="team")
 
     async def _search_fpl_news(self) -> None:
         """Search for FPL news and tips."""
-        pass
+        await self._search_and_load_docs([
+            "FPL Scout selection and transfer recommendations latest",
+            "FPL Scout best tips and advice latest",
+            "Fantasy Premier League wildcard and transfer strategy",
+            "Fantasy Premier League best transfers this week",
+            "FPL captain picks latest expert analysis"
+        ], category="fpl")
