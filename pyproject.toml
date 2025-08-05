@@ -19,3 +19,6 @@ dependencies = [
     "tavily-python>=0.7.10",
     "unstructured>=0.18.11",
 ]
+
+[tool.uv]
+package-dir = "src"
