@@ -3,7 +3,7 @@ from tavily import TavilyClient
 from fpl_gaffer.settings import settings
 from typing import Optional, List, Dict
 from langchain.schema import Document
-from langchain.document_loaders import UnstructuredURLLoader
+from langchain_community.document_loaders import UnstructuredURLLoader
 from asyncio import to_thread
 from dotenv import load_dotenv
 
