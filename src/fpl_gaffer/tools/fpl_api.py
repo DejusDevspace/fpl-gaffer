@@ -1,6 +1,7 @@
 import httpx
 from typing import Dict
 from fpl_gaffer.settings import settings
+from fpl_gaffer.core.exceptions import FPLAPIError
 
 class FPLOfficialAPI:
     def __init__(self):
@@ -14,8 +15,7 @@ class FPLOfficialAPI:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print("Error fetching bootstrap data: {}".format(e))
-            return {}
+            raise FPLAPIError("Failed to fetch bootstrap data: {}".format(e)) from e
 
     async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline."""
@@ -54,5 +54,4 @@ class FPLOfficialAPI:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print("Error fetching fixtures: {}".format(e))
-            return {}
+            raise FPLAPIError("Failed to fetch fixtures: {}".format(e)) from e
