@@ -1,6 +1,7 @@
 import os
 from tavily import TavilyClient
 from fpl_gaffer.settings import settings
+from fpl_gaffer.core.exceptions import NewsSearchError
 from typing import Optional, List, Dict
 from langchain.schema import Document
 from langchain_community.document_loaders import UnstructuredURLLoader
@@ -43,13 +44,18 @@ class FPLNewsSearcher:
         return self.news_docs
 
     async def _search(self, query: str) -> Dict:
-        return self.client.search(
-            query=query,
-            search_depth=settings.tavily_search_depth,
-            max_results=settings.tavily_max_search_results,
-            topic=settings.tavily_search_topic,
-            include_raw_content=False
-        )
+        try:
+            return self.client.search(
+                query=query,
+                search_depth=settings.tavily_search_depth,
+                max_results=settings.tavily_max_search_results,
+                topic=settings.tavily_search_topic,
+                include_raw_content=False
+            )
+        except Exception as e:
+            raise NewsSearchError(
+                f"Failed to retrieve search results for query '{query}': {e}"
+            ) from e
 
     async def _search_and_load_docs(self, queries: List[str], category: str = None) -> None:
         """Search for news from queries and loads them into the news documents."""
@@ -61,20 +67,23 @@ class FPLNewsSearcher:
             urls = [result["url"] for result in response.get("results", []) if "url" in result]
 
             if urls:
-                # Fetch and parse the content from each URL
-                loader = UnstructuredURLLoader(urls=urls)
-                loaded_docs = await to_thread(loader.load)
+                try:
+                    # Fetch and parse the content from each URL
+                    loader = UnstructuredURLLoader(urls=urls)
+                    loaded_docs = await to_thread(loader.load)
 
-                # Update documents' metadata
-                for i, d in enumerate(loaded_docs):
-                    d.metadata.update({
-                        "source": urls[i],
-                        "query": query,
-                        "category": category
-                    })
+                    # Update documents' metadata
+                    for i, d in enumerate(loaded_docs):
+                        d.metadata.update({
+                            "source": urls[i],
+                            "query": query,
+                            "category": category
+                        })
 
-                # Extend the news_docs list with the new documents
-                self.news_docs.extend(loaded_docs)
+                    # Extend the news_docs list with the new documents
+                    self.news_docs.extend(loaded_docs)
+                except Exception as e:
+                    raise NewsSearchError(f"Failed to load documents for query '{query}': {e}") from e
 
     async def _search_injury_news(self) -> None:
         """Search for FPL injury news."""
