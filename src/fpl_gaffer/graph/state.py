@@ -11,6 +11,7 @@ class WorkflowState(BaseModel):
     stage: Literal["collector", "analyzer", "decision"] = "collector"
     gameweek: Optional[int] = None
     deadline: Optional[datetime] = None
+    error_log: Optional[List[str]] = Field(default_factory=list)
 
     # Data collector agent variables
     fpl_api_data: Dict = Field(default_factory=dict)
