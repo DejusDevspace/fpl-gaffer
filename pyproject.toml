@@ -12,6 +12,7 @@ dependencies = [
     "langchain>=0.3.27",
     "langchain-community>=0.3.27",
     "langchain-core>=0.3.72",
+    "langgraph>=0.6.4",
     "lxml-html-clean>=0.4.2",
     "newspaper3k>=0.2.8",
     "pydantic>=2.11.7",
@@ -22,5 +23,3 @@ dependencies = [
     "unstructured>=0.18.11",
 ]
 
-[tool.uv]
-package-dir = "src"
