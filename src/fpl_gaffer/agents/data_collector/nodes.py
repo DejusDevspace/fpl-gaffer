@@ -3,7 +3,7 @@ from fpl_gaffer.tools import FPLOfficialAPI, FPLNewsSearcher
 
 async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
     """Fetch FPL data from the FPL Official API."""
-    fpl_api = FPLOfficialAPI()
+    fpl_api = await FPLOfficialAPI.create()
     try:
         # Fetch gameweek relevant data
         gameweek_data = await fpl_api.get_gameweek_data()

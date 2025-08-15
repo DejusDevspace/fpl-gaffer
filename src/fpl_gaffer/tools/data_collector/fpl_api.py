@@ -16,7 +16,8 @@ class FPLOfficialAPI:
         self._bootstrap_data = bootstrap_data
 
     @classmethod
-    async def create(cls):
+    async def create(cls) -> "FPLOfficialAPI":
+        """Create an instance of FPLOfficialAPI with bootstrap data."""
         base_url = settings.fpl_api_base_url
         session = AsyncClient()
         bootstrap_data = await cls.get_bootstrap_data(base_url, session)
