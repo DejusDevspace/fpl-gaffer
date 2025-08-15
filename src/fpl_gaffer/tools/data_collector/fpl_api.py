@@ -1,17 +1,32 @@
-import httpx
+from httpx import AsyncClient
 from typing import Dict
 from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import FPLAPIError
 
-class FPLOfficialAPI:
-    def __init__(self):
-        self.base_url = settings.fpl_api_base_url
-        self.session = httpx.AsyncClient()
 
-    async def get_bootstrap_data(self) -> Dict:
+class FPLOfficialAPI:
+    def __init__(
+        self,
+        base_url: str,
+        session: AsyncClient,
+        bootstrap_data: Dict
+    ):
+        self.base_url = base_url
+        self.session = session
+        self._bootstrap_data = bootstrap_data
+
+    @classmethod
+    async def create(cls):
+        base_url = settings.fpl_api_base_url
+        session = AsyncClient()
+        bootstrap_data = await cls.get_bootstrap_data(base_url, session)
+        return cls(base_url, session, bootstrap_data)
+
+    @staticmethod
+    async def get_bootstrap_data(base_url, session) -> Dict:
         """Get basic FPL data including gameweeks, teams, players, chips..."""
         try:
-            response = await self.session.get("{}/bootstrap-static/".format(self.base_url))
+            response = await session.get("{}/bootstrap-static/".format(base_url))
             response.raise_for_status()
             return response.json()
         except Exception as e:
@@ -19,13 +34,12 @@ class FPLOfficialAPI:
 
     async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline."""
-        bootstrap_data = await self.get_bootstrap_data()
-        if not bootstrap_data:
+        if not self._bootstrap_data:
             return {}
 
         # Get current gameweek from bootstrap data
         current_gw = None
-        for gw in bootstrap_data.get("events", []):
+        for gw in self._bootstrap_data.get("events", []):
             if gw["is_current"]:
                 current_gw = gw
                 break
