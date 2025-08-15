@@ -6,7 +6,7 @@ from fpl_gaffer.tools import FPLOfficialAPI, FPLNewsSearcher
 
 async def test_fpl_api():
     # Testing FPL API tool
-    api_tool = FPLOfficialAPI()
+    api_tool = await FPLOfficialAPI.create()
     print("Testing FPL Official API tool...\n")
 
     # Fetch current gameweek data
