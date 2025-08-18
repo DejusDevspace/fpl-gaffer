@@ -38,11 +38,11 @@ class FPLOfficialAPI:
         if not self._bootstrap_data:
             return {}
 
-        # Get current gameweek from bootstrap data
-        current_gw = None
+        # Get next gameweek from bootstrap data
+        next_gw = None
         for gw in self._bootstrap_data.get("events", []):
-            if gw["is_current"]:
-                current_gw = gw
+            if gw["is_next"]:
+                next_gw = gw
                 break
 
         # Get fixtures for the current gameweek
@@ -50,16 +50,16 @@ class FPLOfficialAPI:
         if not fixtures:
             return {}
 
-        # Filter fixtures for the current gameweek
-        current_gw_fixtures = [
-            fixture for fixture in fixtures if fixture.get("event") == current_gw.get("id")
-        ] if current_gw else []
+        # Filter fixtures for the next gameweek
+        next_gw_fixtures = [
+            fixture for fixture in fixtures if fixture.get("event") == next_gw.get("id")
+        ] if next_gw else []
 
         return {
-            "gameweek": current_gw.get("id") if current_gw else None,
-            "deadline": current_gw.get("deadline_time") if current_gw else None,
-            "finished": current_gw.get("finished") if current_gw else False,
-            "fixtures": current_gw_fixtures
+            "gameweek": next_gw.get("id") if next_gw else None,
+            "deadline": next_gw.get("deadline_time") if next_gw else None,
+            "finished": next_gw.get("finished") if next_gw else False,
+            "fixtures": next_gw_fixtures
         }
 
     async def get_fixtures(self) -> Dict:
