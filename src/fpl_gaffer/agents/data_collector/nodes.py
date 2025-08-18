@@ -8,7 +8,7 @@ async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
         # Fetch gameweek relevant data
         gameweek_data = await fpl_api.get_gameweek_data()
 
-        if not gameweek_data:
+        if gameweek_data is None:
             state.error_log.append("No gameweek data found.")
             return state
 
