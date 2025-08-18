@@ -35,7 +35,7 @@ class FPLOfficialAPI:
 
     async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline."""
-        if not self._bootstrap_data:
+        if self._bootstrap_data is None:
             return {}
 
         # Get next gameweek from bootstrap data
