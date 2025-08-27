@@ -21,6 +21,10 @@ class FPLOfficialAPI:
         """Get basic manager data from the FPL API."""
         return await self._get(f"/entry/{manager_id}/")
 
+    async def get_gameweek_picks(self, manager_id: int, gw: int) -> Dict:
+        """Get the picks for a specific gameweek."""
+        return await self._get(f"/entry/{manager_id}/event/{gw}/picks/")
+
     async def _get(self, endpoint: str) -> Dict:
         """Internal GET requests handler."""
         try:

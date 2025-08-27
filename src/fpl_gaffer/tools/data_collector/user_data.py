@@ -2,7 +2,6 @@ from fpl_gaffer.tools import FPLOfficialAPI
 from fpl_gaffer.settings import settings
 from httpx import AsyncClient
 from typing import Dict, Optional
-from fpl_gaffer.core.exceptions import FPLAPIError
 from datetime import datetime
 
 
@@ -27,7 +26,25 @@ class FPLUserDataExtractor:
 
     async def get_latest_team_data(self) -> Optional[Dict]:
         """Get the most recent team data."""
-        pass
+        # Fetch bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+        if bootstrap_data is None:
+            return {}
+
+        # Get current gameweek from bootstrap data
+        current_gw = None
+        for gw in bootstrap_data.get("events", []):
+            if gw["is_current"]:
+                current_gw = gw
+                break
+
+        # Get the gameweek picks for the current gameweek
+        gw_picks = await self.api.get_gameweek_picks(
+            self.manager_id,
+            current_gw.get("id") if current_gw else None
+        )
+
+        return gw_picks
 
     def build_user_profile(self, manager_data: Dict) -> Dict:
         """Build a user profile from extracted data."""
