@@ -1,18 +1,22 @@
+from fpl_gaffer.tools import FPLOfficialAPI
 from fpl_gaffer.settings import settings
 from httpx import AsyncClient
 from typing import Dict, Optional
 from fpl_gaffer.core.exceptions import FPLAPIError
 from datetime import datetime
 
+
 class FPLUserDataExtractor:
-    def __init__(self):
+    def __init__(self, api: FPLOfficialAPI, manager_id: int):
         self.base_url = settings.fpl_api_base_url
         self.session = AsyncClient()
+        self.api = api
+        self.manager_id = manager_id
 
-    async def extract_user_data(self, manager_id: int) -> Dict:
+    async def extract_user_data(self, gw: int) -> Dict:
         """Get user data from the FPL API."""
         # Get manager data
-        manager_data = await self.get_manager_data(manager_id)
+        manager_data = await self.api.get_manager_data(self.manager_id)
         if not manager_data:
             return {}
 
@@ -21,16 +25,9 @@ class FPLUserDataExtractor:
 
         return user_profile
 
-    async def get_manager_data(self, manager_id: int) -> Dict:
-        """Get basic manager data from the FPL API."""
-        try:
-            response = await self.session.get(f"{self.base_url}/entry/{manager_id}/")
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            raise FPLAPIError(
-                f"Failed to fetch manager data for manager with ID: {manager_id}:\n {e}"
-            ) from e
+    async def get_latest_team_data(self) -> Optional[Dict]:
+        """Get the most recent team data."""
+        pass
 
     def build_user_profile(self, manager_data: Dict) -> Dict:
         """Build a user profile from extracted data."""

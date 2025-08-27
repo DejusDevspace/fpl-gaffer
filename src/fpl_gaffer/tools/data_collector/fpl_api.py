@@ -5,68 +5,34 @@ from fpl_gaffer.core.exceptions import FPLAPIError
 
 
 class FPLOfficialAPI:
-    def __init__(
-        self,
-        base_url: str,
-        session: AsyncClient,
-        bootstrap_data: Dict
-    ):
-        self.base_url = base_url
-        self.session = session
-        self._bootstrap_data = bootstrap_data
+    def __init__(self):
+        self.base_url = settings.fpl_api_base_url
+        self.session = AsyncClient()
 
-    @classmethod
-    async def create(cls) -> "FPLOfficialAPI":
-        """Create an instance of FPLOfficialAPI with bootstrap data."""
-        base_url = settings.fpl_api_base_url
-        session = AsyncClient()
-        bootstrap_data = await cls.get_bootstrap_data(base_url, session)
-        return cls(base_url, session, bootstrap_data)
-
-    @staticmethod
-    async def get_bootstrap_data(base_url, session) -> Dict:
+    async def get_bootstrap_data(self) -> Dict:
         """Get basic FPL data including gameweeks, teams, players, chips..."""
-        try:
-            response = await session.get("{}/bootstrap-static/".format(base_url))
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            raise FPLAPIError("Failed to fetch bootstrap data: {}".format(e)) from e
-
-    async def get_gameweek_data(self) -> Dict:
-        """Get info for the current gameweek and deadline."""
-        if self._bootstrap_data is None:
-            return {}
-
-        # Get next gameweek from bootstrap data
-        next_gw = None
-        for gw in self._bootstrap_data.get("events", []):
-            if gw["is_next"]:
-                next_gw = gw
-                break
-
-        # Get fixtures for the current gameweek
-        fixtures = await self.get_fixtures()
-        if not fixtures:
-            return {}
-
-        # Filter fixtures for the next gameweek
-        next_gw_fixtures = [
-            fixture for fixture in fixtures if fixture.get("event") == next_gw.get("id")
-        ] if next_gw else []
-
-        return {
-            "gameweek": next_gw.get("id") if next_gw else None,
-            "deadline": next_gw.get("deadline_time") if next_gw else None,
-            "finished": next_gw.get("finished") if next_gw else False,
-            "fixtures": next_gw_fixtures
-        }
+        return await self._get("/bootstrap-static/")
 
     async def get_fixtures(self) -> Dict:
         """Get fixtures for the season."""
+        return await self._get("/fixtures/")
+
+    async def get_manager_data(self, manager_id: int) -> Dict:
+        """Get basic manager data from the FPL API."""
+        return await self._get(f"/entry/{manager_id}/")
+
+    async def _get(self, endpoint: str) -> Dict:
+        """Internal GET requests handler."""
         try:
-            response = await self.session.get("{}/fixtures/".format(self.base_url))
+            response = await self.session.get(f"{self.base_url}{endpoint}")
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            raise FPLAPIError("Failed to fetch fixtures: {}".format(e)) from e
+            raise FPLAPIError(f"Failed to fetch endpoint '{endpoint}': {e}") from e
+
+    # ----- Context manager support ----- #
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.session.aclose()
