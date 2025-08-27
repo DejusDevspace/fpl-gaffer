@@ -48,7 +48,7 @@ class FPLUserDataExtractor:
 
     def build_user_profile(self, manager_data: Dict) -> Dict:
         """Build a user profile from extracted data."""
-        if not manager_data:
+        if manager_data is None:
             return {}
 
         # Add manager data to user profile
