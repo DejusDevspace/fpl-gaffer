@@ -46,6 +46,40 @@ class FPLUserDataExtractor:
 
         return gw_picks
 
+    def extract_squad_info(self, team_data: Dict) -> Dict:
+        """Extract detailed squad information."""
+        picks = team_data.get("picks", [])
+
+        # Squad information dict
+        squad_info = {
+            "starting_xi": [],
+            "bench": [],
+            "captain": None,
+            "vice_captain": None
+        }
+
+        # Extract player data from picks
+        for pick in picks:
+            player_info = {
+                "player_id": pick["element"],
+                "position": pick["position"],
+                "multiplier": pick["multiplier"]
+            }
+
+            # Get captain and vice captain
+            if pick["is_captain"]:
+                squad_info["captain"] = pick["element"]
+            if pick['is_vice_captain']:
+                squad_info['vice_captain'] = pick['element']
+
+            # Sort out starting 11
+            if pick["position"] <= 11:
+                squad_info["starting_xi"].append(player_info)
+            else:
+                squad_info["bench"].append(player_info)
+
+        return squad_info
+
     def build_user_profile(self, manager_data: Dict) -> Dict:
         """Build a user profile from extracted data."""
         if manager_data is None:
@@ -64,3 +98,5 @@ class FPLUserDataExtractor:
         }
 
         return user_profile
+
+    # TODO: Handle auto subs data for team...
