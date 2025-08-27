@@ -35,11 +35,11 @@ async def user_data():
         user_data_extractor = FPLUserDataExtractor(api, manager_id=user_id)
         print("Testing FPL User Data Extractor tool...\n")
 
-        user_profile = await user_data_extractor.extract_user_data(2)
+        user_profile = await user_data_extractor.extract_user_data()
         print(f"\nUser Profile for ID {user_id}:\n", user_profile)
 
 
 if __name__ == "__main__":
-    asyncio.run(fpl_data())
+    # asyncio.run(fpl_data())
     # asyncio.run(news_searcher())
     asyncio.run(user_data())

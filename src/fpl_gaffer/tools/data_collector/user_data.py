@@ -12,15 +12,18 @@ class FPLUserDataExtractor:
         self.api = api
         self.manager_id = manager_id
 
-    async def extract_user_data(self, gw: int) -> Dict:
+    async def extract_user_data(self) -> Dict:
         """Get user data from the FPL API."""
         # Get manager data
         manager_data = await self.api.get_manager_data(self.manager_id)
         if not manager_data:
             return {}
 
+        # Get team/squad data and extract info
+        squad_data = await self.get_latest_team_data()
+
         # Build user profile
-        user_profile = self.build_user_profile(manager_data)
+        user_profile = self.build_user_profile(manager_data, squad_data)
 
         return user_profile
 
@@ -32,19 +35,27 @@ class FPLUserDataExtractor:
             return {}
 
         # Get current gameweek from bootstrap data
+        # TODO: Remove below and replace with state gameweek data
         current_gw = None
         for gw in bootstrap_data.get("events", []):
             if gw["is_current"]:
                 current_gw = gw
                 break
 
-        # Get the gameweek picks for the current gameweek
-        gw_picks = await self.api.get_gameweek_picks(
+        # Get the team data for the current gameweek
+        team_data = await self.api.get_gameweek_picks(
             self.manager_id,
             current_gw.get("id") if current_gw else None
         )
 
-        return gw_picks
+        # Create structured squad data
+        squad_data = self.extract_squad_info(team_data)
+        if squad_data is None:
+            return None
+
+        # TODO: Get financial status of the team (ITB, etc)
+
+        return squad_data
 
     def extract_squad_info(self, team_data: Dict) -> Dict:
         """Extract detailed squad information."""
@@ -55,7 +66,8 @@ class FPLUserDataExtractor:
             "starting_xi": [],
             "bench": [],
             "captain": None,
-            "vice_captain": None
+            "vice_captain": None,
+            "active_chip": team_data.get("active_chip", None)
         }
 
         # Extract player data from picks
@@ -80,7 +92,11 @@ class FPLUserDataExtractor:
 
         return squad_info
 
-    def build_user_profile(self, manager_data: Dict) -> Dict:
+    def build_user_profile(
+        self,
+        manager_data: Dict,
+        squad_data: Dict
+    ) -> Dict:
         """Build a user profile from extracted data."""
         if manager_data is None:
             return {}
@@ -94,8 +110,14 @@ class FPLUserDataExtractor:
             "region": manager_data.get("player_region_name"),
             "overall_rank": manager_data.get("summary_overall_rank"),
             "total_points": manager_data.get("summary_overall_points"),
-            "last_updated": datetime.now().isoformat()
         }
+
+        # Add squad data to user profile
+        if squad_data is not None:
+            user_profile.update({
+                "current_squad": squad_data,
+                "last_updated": datetime.now().isoformat()
+            })
 
         return user_profile
 
