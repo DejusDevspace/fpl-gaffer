@@ -12,6 +12,7 @@ class FPLDataExtractor:
             return {}
 
         # Get next gameweek from bootstrap data
+        # TODO: Optimize below block by using 'next' function
         next_gw = None
         for gw in bootstrap_data.get("events", []):
             if gw["is_next"]:
