@@ -34,8 +34,11 @@ class FPLUserDataExtractor:
         if bootstrap_data is None:
             return {}
 
+        # TODO: Build mappings from bootstrap data using fpl_mapper
+
         # Get current gameweek from bootstrap data
         # TODO: Remove below and replace with state gameweek data
+        # TODO: Optimize below block by using 'next' function
         current_gw = None
         for gw in bootstrap_data.get("events", []):
             if gw["is_current"]:
@@ -49,6 +52,7 @@ class FPLUserDataExtractor:
         )
 
         # Create structured squad data
+        # TODO: Update extraction with updated extraction function
         squad_data = self.extract_squad_info(team_data)
         if squad_data is None:
             return None
@@ -57,6 +61,7 @@ class FPLUserDataExtractor:
 
         return squad_data
 
+    # TODO: Update extraction function to include player details using fpl_mapper
     def extract_squad_info(self, team_data: Dict) -> Dict:
         """Extract detailed squad information."""
         picks = team_data.get("picks", [])
@@ -71,6 +76,7 @@ class FPLUserDataExtractor:
         }
 
         # Extract player data from picks
+        # TODO: Map player IDs to detailed info using fpl_mapper
         for pick in picks:
             player_info = {
                 "player_id": pick["element"],

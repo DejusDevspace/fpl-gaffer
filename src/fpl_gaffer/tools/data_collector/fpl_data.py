@@ -11,6 +11,8 @@ class FPLDataExtractor:
         if bootstrap_data is None:
             return {}
 
+        # TODO: Build team mappings from bootstrap data using fpl_mapper
+
         # Get next gameweek from bootstrap data
         # TODO: Optimize below block by using 'next' function
         next_gw = None
@@ -25,6 +27,7 @@ class FPLDataExtractor:
             return {}
 
         # Filter fixtures for the next gameweek
+        # TODO: Update fixtures using mapped team data
         next_gw_fixtures = [
             fixture for fixture in fixtures if fixture.get("event") == next_gw.get("id")
         ] if next_gw else []

@@ -7,7 +7,7 @@ def build_mappings(boostrap_data: Dict) -> Tuple[Dict, Dict, Dict]:
             "name": f"{player['first_name']} {player['second_name']}",
             "team_id": player["team"],
             "position_id": player["element_type"],
-            "price": player["now_cost"] / 10,
+            "current_price": player["now_cost"] / 10,
             "status": player["status"],
         }
         for player in boostrap_data.get("elements", [])
@@ -24,3 +24,49 @@ def build_mappings(boostrap_data: Dict) -> Tuple[Dict, Dict, Dict]:
     }
 
     return players_mapping, teams_mapping, positions_mapping
+
+def map_player(
+    player_id: int,
+    players: Dict,
+    teams: Dict,
+    positions: Dict
+) -> Dict:
+    """Map a player ID to detailed player information."""
+    player_info = players.get(player_id, {})
+
+    if not player_info:
+        return {}
+
+    team_name = teams.get(player_info["team_id"], "Unknown Team")
+    position_name = positions.get(player_info["position_id"], "Unknown Position")
+
+    return {
+        "id": player_id,
+        "name": player_info["name"],
+        "team": team_name,
+        "position": position_name,
+        "current_price": player_info["price"],
+        "status": player_info["status"]
+    }
+
+def map_squad(
+    picks: Dict,
+    players: Dict,
+    teams: Dict,
+    positions: Dict
+) -> List[Dict]:
+    """
+    Map a list of player IDs to detailed player information.
+    Expects 'picks' data from FPLOfficialAPI.get_gameweek_picks()
+    """
+    mapped_team = []
+
+    for pick in picks:
+        mapped_team.append({
+            **map_player(pick["element"], players, teams, positions),
+            "multiplier": pick["multiplier"],
+            "is_captain": pick.get("is_captain", False),
+            "is_vice_captain": pick.get("is_vice_captain", False),
+        })
+
+    return mapped_team
