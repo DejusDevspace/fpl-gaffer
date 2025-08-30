@@ -3,6 +3,7 @@ from fpl_gaffer.settings import settings
 from httpx import AsyncClient
 from typing import Dict, Optional
 from datetime import datetime
+from fpl_gaffer.utils import build_mappings, map_player, map_squad
 
 
 class FPLUserDataExtractor:
@@ -34,16 +35,14 @@ class FPLUserDataExtractor:
         if bootstrap_data is None:
             return {}
 
-        # TODO: Build mappings from bootstrap data using fpl_mapper
+        # Build mappings from bootstrap data
+        players, teams, positions = build_mappings(bootstrap_data)
 
         # Get current gameweek from bootstrap data
         # TODO: Remove below and replace with state gameweek data
-        # TODO: Optimize below block by using 'next' function
-        current_gw = None
-        for gw in bootstrap_data.get("events", []):
-            if gw["is_current"]:
-                current_gw = gw
-                break
+        current_gw = next((
+            gw for gw in bootstrap_data.get("events", []) if gw["is_current"]
+        ), None)
 
         # Get the team data for the current gameweek
         team_data = await self.api.get_gameweek_picks(
@@ -52,43 +51,54 @@ class FPLUserDataExtractor:
         )
 
         # Create structured squad data
-        # TODO: Update extraction with updated extraction function
-        squad_data = self.extract_squad_info(team_data)
+        squad_data = self.extract_squad_info(team_data, players, teams, positions)
         if squad_data is None:
             return None
 
-        # TODO: Get financial status of the team (ITB, etc)
-
         return squad_data
 
-    # TODO: Update extraction function to include player details using fpl_mapper
-    def extract_squad_info(self, team_data: Dict) -> Dict:
+    def extract_squad_info(
+        self,
+        team_data: Dict,
+        players: Dict,
+        teams: Dict,
+        positions: Dict
+    ) -> Dict:
         """Extract detailed squad information."""
-        picks = team_data.get("picks", [])
+        gw_history = team_data.get("entry_history", {})
 
-        # Squad information dict
+        # Squad information
         squad_info = {
             "starting_xi": [],
             "bench": [],
             "captain": None,
             "vice_captain": None,
-            "active_chip": team_data.get("active_chip", None)
+            "active_chip": team_data.get("active_chip", None),
+            "points": gw_history.get("points", 0),
+            "total_points": gw_history.get("total_points", 0),
+            "rank": gw_history.get("overall_rank", 0),
+            "squad_value": gw_history.get("value", 0) / 10,
+            "transfers": gw_history.get("event_transfers", 0),
+            "transfers_cost": gw_history.get("event_transfers_cost", 0),
+            "money_itb": gw_history.get("bank", 0) / 10
         }
 
+        # Get manager picks from team data
+        picks = team_data.get("picks", [])
+
         # Extract player data from picks
-        # TODO: Map player IDs to detailed info using fpl_mapper
         for pick in picks:
-            player_info = {
-                "player_id": pick["element"],
+            player_info = map_player(pick["element"], players, teams, positions)
+            player_info.update({
                 "position": pick["position"],
                 "multiplier": pick["multiplier"]
-            }
+            })
 
             # Get captain and vice captain
             if pick["is_captain"]:
-                squad_info["captain"] = pick["element"]
+                squad_info["captain"] = player_info
             if pick['is_vice_captain']:
-                squad_info['vice_captain'] = pick['element']
+                squad_info['vice_captain'] = player_info
 
             # Sort out starting 11
             if pick["position"] <= 11:
@@ -121,10 +131,11 @@ class FPLUserDataExtractor:
         # Add squad data to user profile
         if squad_data is not None:
             user_profile.update({
-                "current_squad": squad_data,
+                "squad_info": squad_data,
                 "last_updated": datetime.now().isoformat()
             })
 
         return user_profile
 
     # TODO: Handle auto subs data for team...
+    # TODO: Get user history data (transfers, points, rank, etc.)

@@ -45,7 +45,7 @@ def map_player(
         "name": player_info["name"],
         "team": team_name,
         "position": position_name,
-        "current_price": player_info["price"],
+        "current_price": player_info["current_price"],
         "status": player_info["status"]
     }
 

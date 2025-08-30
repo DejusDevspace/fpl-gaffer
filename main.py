@@ -11,13 +11,13 @@ from fpl_gaffer.tools import (
 
 async def fpl_data():
     # Testing FPL API tool
-    async with FPLOfficialAPI() as api:
-        fpl_data_extractor = FPLDataExtractor(api)
-        print("Testing FPL Data Extraction tool...\n")
+    api = FPLOfficialAPI()
+    fpl_data_extractor = FPLDataExtractor(api)
+    print("Testing FPL Data Extraction tool...\n")
 
-        # Fetch current gameweek data
-        gameweek_data = await fpl_data_extractor.get_gameweek_data()
-        print("\nNext Gameweek Data:", gameweek_data)
+    # Fetch current gameweek data
+    gameweek_data = await fpl_data_extractor.get_gameweek_data()
+    print("\nNext Gameweek Data:", gameweek_data)
 
 async def news_searcher():
     # Testing FPL News Searcher
@@ -31,12 +31,13 @@ async def news_searcher():
 async def user_data():
     # Testing FPL User Data Extractor
     user_id = 2723529
-    async with FPLOfficialAPI() as api:
-        user_data_extractor = FPLUserDataExtractor(api, manager_id=user_id)
-        print("Testing FPL User Data Extractor tool...\n")
+    api = FPLOfficialAPI()
 
-        user_profile = await user_data_extractor.extract_user_data()
-        print(f"\nUser Profile for ID {user_id}:\n", user_profile)
+    user_data_extractor = FPLUserDataExtractor(api, manager_id=user_id)
+    print("Testing FPL User Data Extractor tool...\n")
+
+    user_profile = await user_data_extractor.extract_user_data()
+    print(f"\nUser Profile for ID {user_id}:\n", user_profile)
 
 
 if __name__ == "__main__":
