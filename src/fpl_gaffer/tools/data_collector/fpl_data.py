@@ -1,4 +1,6 @@
 from fpl_gaffer.tools import FPLOfficialAPI
+from fpl_gaffer.utils import build_mappings
+
 
 class FPLDataExtractor:
     def __init__(self, api: FPLOfficialAPI):
@@ -11,30 +13,34 @@ class FPLDataExtractor:
         if bootstrap_data is None:
             return {}
 
-        # TODO: Build team mappings from bootstrap data using fpl_mapper
+        # Build team mappings using fpl_mapper
+        _, teams, _ = build_mappings(bootstrap_data)
 
         # Get next gameweek from bootstrap data
-        # TODO: Optimize below block by using 'next' function
-        next_gw = None
-        for gw in bootstrap_data.get("events", []):
-            if gw["is_next"]:
-                next_gw = gw
-                break
+        next_gw = next((
+            gw for gw in bootstrap_data.get("events", []) if gw["is_next"]
+        ), None)
 
         # Get fixtures for the current gameweek
         fixtures = await self.api.get_fixtures()
         if not fixtures:
             return {}
 
-        # Filter fixtures for the next gameweek
-        # TODO: Update fixtures using mapped team data
-        next_gw_fixtures = [
-            fixture for fixture in fixtures if fixture.get("event") == next_gw.get("id")
-        ] if next_gw else []
+        # Filter fixtures for the next gameweek and convert using team mappings
+        next_gw_fixtures = []
+        if next_gw:
+            for fixture in fixtures:
+                if fixture.get("event") == next_gw.get("id"):
+                    next_gw_fixtures.append({
+                        "id": fixture.get("id"),
+                        "home_team": teams.get(fixture.get("team_h"), "Unknown"),
+                        "away_team": teams.get(fixture.get("team_a"), "Unknown"),
+                        "kickoff_time": fixture.get("kickoff_time"),
+                    })
 
         return {
             "gameweek": next_gw.get("id") if next_gw else None,
             "deadline": next_gw.get("deadline_time") if next_gw else None,
-            "finished": next_gw.get("finished") if next_gw else False,
+            # "finished": next_gw.get("finished") if next_gw else False,
             "fixtures": next_gw_fixtures
         }
