@@ -43,4 +43,4 @@ async def user_data():
 if __name__ == "__main__":
     asyncio.run(fpl_data())
     # asyncio.run(news_searcher())
-    # asyncio.run(user_data())
+    asyncio.run(user_data())
