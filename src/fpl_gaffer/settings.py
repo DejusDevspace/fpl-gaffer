@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = "FPL Gaffer"
 
+    # User settings
+    FPL_MANAGER_ID: int = 2723529
+
     # FPL API settings
     fpl_api_base_url: str = "https://fantasy.premierleague.com/api"
 

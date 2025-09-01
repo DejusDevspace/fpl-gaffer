@@ -5,6 +5,7 @@ from fpl_gaffer.tools import (
     FPLDataExtractor,
     FPLUserDataExtractor
 )
+from fpl_gaffer.settings import settings
 
 
 async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
@@ -30,10 +31,12 @@ async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
 
     return state
 
-async def fetch_user_data_node(state: WorkflowState, manager_id: int) -> WorkflowState:
+async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
     """Fetch user data."""
     api = FPLOfficialAPI()
+    manager_id = settings.FPL_MANAGER_ID
     # TODO: Get manager ID from state or from config (save in db or?)
+    # would use var from settings for now
     user_data_extractor = FPLUserDataExtractor(api, manager_id)
 
     try:
