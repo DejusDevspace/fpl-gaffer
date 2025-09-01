@@ -3,7 +3,8 @@ from fpl_gaffer.tools import (
     FPLOfficialAPI,
     FPLNewsSearcher,
     FPLDataExtractor,
-    FPLUserDataExtractor
+    FPLUserDataExtractor,
+    FPLNewsProcessor
 )
 from fpl_gaffer.settings import settings
 
@@ -14,6 +15,9 @@ async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
     fpl_data_extractor = FPLDataExtractor(api)
 
     try:
+        # Update stage to indicate data extraction
+        state.stage = "extraction"
+
         # Fetch gameweek relevant data
         gameweek_data = await fpl_data_extractor.get_gameweek_data()
 
@@ -42,6 +46,9 @@ async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
     user_data_extractor = FPLUserDataExtractor(api, manager_id)
 
     try:
+        # Update stage to indicate data extraction
+        state.stage = "extraction"
+
         # Fetch manager data
         # TODO: Send gameweek through state and change from bootstrap data in functions.
         user_data = await user_data_extractor.extract_user_data()
@@ -63,6 +70,9 @@ async def search_news_node(state: WorkflowState) -> WorkflowState:
     news_searcher = FPLNewsSearcher()
 
     try:
+        # Update stage to indicate data extraction
+        state.stage = "extraction"
+
         # Search for news
         news_docs = await news_searcher.search_news()
 
@@ -75,5 +85,26 @@ async def search_news_node(state: WorkflowState) -> WorkflowState:
 
     except Exception as e:
         state.error_log.append(f"Error searching news: {e}")
+
+    return state
+
+async def process_news_node(state: WorkflowState) -> WorkflowState:
+    """Process news data."""
+    try:
+        # Update stage to indicate data processing
+        state.stage = "processing"
+
+        if state.news_search_data is None:
+            state.error_log.append("No news data to process.")
+            return state
+
+        news_processor = FPLNewsProcessor(state.news_search_data, state.user_data)
+        processed_docs = news_processor.filter_relevant_news()
+
+        # Update state with processed news documents
+        state.filtered_news.extend(processed_docs)
+
+    except Exception as e:
+        state.error_log.append(f"Error processing news data: {e}")
 
     return state

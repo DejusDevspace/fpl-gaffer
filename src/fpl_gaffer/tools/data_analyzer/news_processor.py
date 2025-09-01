@@ -34,24 +34,24 @@ class FPLNewsProcessor:
 
         # Rank documents based on relevance to user's players and teams
         for doc in self.news_docs:
-            relevant_score = 0
+            relevance_score = 0
 
             # Check for player mentions
             for player in user_players:
                 if player.lower() in doc.page_content.lower():
-                    relevant_score += settings.user_player_relevance_score
+                    relevance_score += settings.user_player_relevance_score
 
             # Check for team mentions
             for team in user_teams:
                 if team.lower() in doc.page_content.lower():
-                    relevant_score += settings.user_team_relevance_score
+                    relevance_score += settings.user_team_relevance_score
 
             # Always include general FPL advice
             if doc.metadata.get("category") == "fpl":
-                relevant_score += settings.fpl_news_relevance_score
+                relevance_score += settings.fpl_news_relevance_score
 
-            if relevant_score > 0:
-                doc.metadata["relevance_score"] = relevant_score
+            if relevance_score > 0:
+                doc.metadata["relevance_score"] = relevance_score
                 relevant_docs.append(doc)
 
         # Sort documents by relevance score
