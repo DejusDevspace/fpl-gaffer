@@ -90,7 +90,7 @@ class FPLUserDataExtractor:
         for pick in picks:
             player_info = map_player(pick["element"], players, teams, positions)
             player_info.update({
-                "position": pick["position"],
+                "position_in_team": pick["position"],
                 "multiplier": pick["multiplier"]
             })
 
