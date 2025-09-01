@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = "FPL Gaffer"
 
-    # User settings
+    # User data settings
     FPL_MANAGER_ID: int = 2723529
 
     # FPL API settings
@@ -23,5 +23,11 @@ class Settings(BaseSettings):
     tavily_search_depth: str = "advanced"
     tavily_max_search_results: int = 3
     tavily_search_topic: str = "news"
+
+    # FPL News Processor settings
+    user_player_relevance_score: int = 3
+    user_team_relevance_score: int = 1
+    fpl_news_relevance_score: int = 2
+    max_relevant_news: int = 15
 
 settings = Settings()
