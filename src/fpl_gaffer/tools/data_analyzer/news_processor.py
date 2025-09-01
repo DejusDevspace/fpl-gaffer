@@ -1,0 +1,2 @@
+class FPLNewsProcessor:
+    pass

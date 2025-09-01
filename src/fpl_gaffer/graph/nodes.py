@@ -34,13 +34,16 @@ async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
 async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
     """Fetch user data."""
     api = FPLOfficialAPI()
-    manager_id = settings.FPL_MANAGER_ID
+
     # TODO: Get manager ID from state or from config (save in db or?)
     # would use var from settings for now
+    manager_id = settings.FPL_MANAGER_ID
+
     user_data_extractor = FPLUserDataExtractor(api, manager_id)
 
     try:
         # Fetch manager data
+        # TODO: Send gameweek through state and change from bootstrap data in functions.
         user_data = await user_data_extractor.extract_user_data()
 
         if user_data is None:
