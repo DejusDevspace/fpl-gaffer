@@ -7,7 +7,7 @@ from fpl_gaffer.graph.nodes import (
 )
 
 @lru_cache(maxsize=1)
-def create_data_collector_graph():
+def create_workflow_graph():
     """Create the data collector workflow graph."""
     graph_builder = StateGraph(WorkflowState)
 
