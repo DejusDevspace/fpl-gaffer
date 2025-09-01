@@ -13,7 +13,7 @@ class WorkflowState(BaseModel):
     deadline: Optional[datetime] = None
     error_log: Optional[List[str]] = Field(default_factory=list)
 
-    # Data collector agent variables
+    # Data collector variables
     fpl_data: Dict = Field(default_factory=dict)
     news_search_data: List[Document] = Field(default_factory=list)
     user_data: Dict = Field(default_factory=dict)

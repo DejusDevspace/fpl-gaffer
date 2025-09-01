@@ -37,14 +37,11 @@ def map_player(
     if not player_info:
         return {}
 
-    team_name = teams.get(player_info["team_id"], "Unknown Team")
-    position_name = positions.get(player_info["position_id"], "Unknown Position")
-
     return {
         "id": player_id,
         "name": player_info["name"],
-        "team": team_name,
-        "position": position_name,
+        "team": teams.get(player_info["team_id"], "Unknown Team"),
+        "position": positions.get(player_info["position_id"], "Unknown Position"),
         "current_price": player_info["current_price"],
         "status": player_info["status"]
     }
