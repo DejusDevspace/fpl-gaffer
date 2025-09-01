@@ -1,7 +1,7 @@
 from functools import lru_cache
 from langgraph.graph import StateGraph, START, END
 from fpl_gaffer.graph.state import WorkflowState
-from fpl_gaffer.agents.data_collector.nodes import (
+from fpl_gaffer.graph.nodes import (
     fetch_fpl_data_node,
     search_news_node
 )
