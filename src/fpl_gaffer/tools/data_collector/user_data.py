@@ -17,6 +17,7 @@ class FPLUserDataExtractor:
         """Get user data from the FPL API."""
         # Get manager data
         manager_data = await self.api.get_manager_data(self.manager_id)
+
         if not manager_data:
             return {}
 
@@ -32,6 +33,7 @@ class FPLUserDataExtractor:
         """Get the most recent team data."""
         # Fetch bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
+
         if bootstrap_data is None:
             return {}
 
@@ -97,6 +99,7 @@ class FPLUserDataExtractor:
             # Get captain and vice captain
             if pick["is_captain"]:
                 squad_info["captain"] = player_info
+
             if pick['is_vice_captain']:
                 squad_info['vice_captain'] = player_info
 
