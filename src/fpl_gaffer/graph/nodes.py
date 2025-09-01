@@ -1,4 +1,4 @@
-from fpl_gaffer.core.state import WorkflowState
+from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.tools import (
     FPLOfficialAPI,
     FPLNewsSearcher,
