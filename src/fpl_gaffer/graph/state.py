@@ -8,7 +8,7 @@ class WorkflowState(BaseModel):
     """State for the fpl gaffer workflow."""
 
     # Core state variables
-    stage: Literal["extraction", "processing", "decision"] = "collector"
+    stage: Literal["extraction", "processing", "decision"] = "extraction"
     gameweek: Optional[int] = None
     deadline: Optional[datetime] = None
     error_log: Optional[List[str]] = Field(default_factory=list)
