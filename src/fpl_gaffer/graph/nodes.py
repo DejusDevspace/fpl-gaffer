@@ -1,9 +1,9 @@
 from fpl_gaffer.graph.state import WorkflowState
-from fpl_gaffer.tools import (
-    FPLOfficialAPI,
-    FPLNewsSearcher,
-    FPLDataExtractor,
-    FPLUserDataExtractor,
+from fpl_gaffer.services import (
+    FPLOfficialAPIClient,
+    FPLNewsSearchClient,
+    FPLDataManager,
+    FPLUserProfileManager,
     FPLNewsProcessor
 )
 from fpl_gaffer.settings import settings
@@ -11,15 +11,15 @@ from fpl_gaffer.settings import settings
 
 async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
     """Fetch FPL data for the next gameweek."""
-    api = FPLOfficialAPI()
-    fpl_data_extractor = FPLDataExtractor(api)
+    api = FPLOfficialAPIClient()
+    fpl_data_manager = FPLDataManager(api)
 
     try:
         # Update stage to indicate data extraction
         state.stage = "extraction"
 
         # Fetch gameweek relevant data
-        gameweek_data = await fpl_data_extractor.get_gameweek_data()
+        gameweek_data = await fpl_data_manager.get_gameweek_data()
 
         if gameweek_data is None:
             state.error_log.append("No gameweek data found.")
@@ -37,13 +37,13 @@ async def fetch_fpl_data_node(state: WorkflowState) -> WorkflowState:
 
 async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
     """Fetch user data."""
-    api = FPLOfficialAPI()
+    api = FPLOfficialAPIClient()
 
     # TODO: Get manager ID from state or from config (save in db or?)
     # would use var from settings for now
     manager_id = settings.FPL_MANAGER_ID
 
-    user_data_extractor = FPLUserDataExtractor(api, manager_id)
+    user_data_manager = FPLUserProfileManager(api, manager_id)
 
     try:
         # Update stage to indicate data extraction
@@ -51,7 +51,7 @@ async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
 
         # Fetch manager data
         # TODO: Send gameweek through state and change from bootstrap data in functions.
-        user_data = await user_data_extractor.extract_user_data()
+        user_data = await user_data_manager.extract_user_data()
 
         if user_data is None:
             state.error_log.append(f"No manager data found for ID {manager_id}.")
@@ -67,14 +67,14 @@ async def fetch_user_data_node(state: WorkflowState) -> WorkflowState:
 
 async def search_news_node(state: WorkflowState) -> WorkflowState:
     """Search for news data using the news searcher tool."""
-    news_searcher = FPLNewsSearcher()
+    news_client = FPLNewsSearchClient()
 
     try:
         # Update stage to indicate data extraction
         state.stage = "extraction"
 
         # Search for news
-        news_docs = await news_searcher.search_news()
+        news_docs = await news_client.search_news()
 
         if not news_docs:
             state.error_log.append("No news documents found.")
