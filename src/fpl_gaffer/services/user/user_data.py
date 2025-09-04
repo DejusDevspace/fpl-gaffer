@@ -1,4 +1,4 @@
-from fpl_gaffer.tools import FPLOfficialAPI
+from fpl_gaffer.services import FPLOfficialAPIClient
 from fpl_gaffer.settings import settings
 from httpx import AsyncClient
 from typing import Dict, Optional
@@ -6,8 +6,8 @@ from datetime import datetime
 from fpl_gaffer.utils import build_mappings, map_player, map_squad
 
 
-class FPLUserDataExtractor:
-    def __init__(self, api: FPLOfficialAPI, manager_id: int):
+class FPLUserProfileManager:
+    def __init__(self, api: FPLOfficialAPIClient, manager_id: int):
         self.base_url = settings.fpl_api_base_url
         self.session = AsyncClient()
         self.api = api

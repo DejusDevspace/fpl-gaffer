@@ -4,7 +4,7 @@ from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import FPLAPIError
 
 
-class FPLOfficialAPI:
+class FPLOfficialAPIClient:
     def __init__(self):
         self.base_url = settings.fpl_api_base_url
         self.session = AsyncClient()

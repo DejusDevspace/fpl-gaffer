@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 _ = load_dotenv()
 
 
-class FPLNewsSearcher:
+class FPLNewsSearchClient:
     # Required env variables for FPL news searcher
     REQUIRED_ENV_VARS = ["TAVILY_API_KEY"]
 

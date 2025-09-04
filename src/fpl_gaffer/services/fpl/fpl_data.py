@@ -1,9 +1,9 @@
-from fpl_gaffer.tools import FPLOfficialAPI
+from fpl_gaffer.services import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
 
-class FPLDataExtractor:
-    def __init__(self, api: FPLOfficialAPI):
+class FPLDataManager:
+    def __init__(self, api: FPLOfficialAPIClient):
         self.api = api
 
     async def get_gameweek_data(self):
