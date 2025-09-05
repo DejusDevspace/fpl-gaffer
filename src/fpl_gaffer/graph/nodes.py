@@ -1,5 +1,5 @@
 from fpl_gaffer.graph.state import WorkflowState
-from fpl_gaffer.services import (
+from fpl_gaffer.modules import (
     FPLOfficialAPIClient,
     FPLNewsSearchClient,
     FPLDataManager,

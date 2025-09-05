@@ -2,7 +2,7 @@
 ############ TESTING MODULES FOR APPLICATION ############
 #########################################################
 import asyncio
-from fpl_gaffer.services import (
+from fpl_gaffer.modules import (
     FPLDataExtractor,
     FPLNewsSearcher,
     FPLUserDataExtractor,
