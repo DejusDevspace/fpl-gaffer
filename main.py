@@ -41,6 +41,7 @@ async def user_data():
 
 
 # TODO: Consider MVP refactor to chat flow and tool calling (agentic workflow)
+# TODO: Work on news processing pipeline
 
 if __name__ == "__main__":
     # asyncio.run(fpl_data())
