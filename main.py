@@ -3,16 +3,16 @@
 #########################################################
 import asyncio
 from fpl_gaffer.modules import (
-    FPLDataExtractor,
-    FPLNewsSearcher,
-    FPLUserDataExtractor,
-    FPLOfficialAPI
+    FPLDataManager,
+    FPLNewsSearchClient,
+    FPLUserProfileManager,
+    FPLOfficialAPIClient
 )
 
 async def fpl_data():
     # Testing FPL API tool
-    api = FPLOfficialAPI()
-    fpl_data_extractor = FPLDataExtractor(api)
+    api = FPLOfficialAPIClient()
+    fpl_data_extractor = FPLDataManager(api)
     print("Testing FPL Data Extraction tool...\n")
 
     # Fetch current gameweek data
@@ -21,7 +21,7 @@ async def fpl_data():
 
 async def news_searcher():
     # Testing FPL News Searcher
-    news_searcher = FPLNewsSearcher()
+    news_searcher = FPLNewsSearchClient()
     print("Testing FPL News Searcher tool...\n")
 
     # Get news documents
@@ -31,9 +31,9 @@ async def news_searcher():
 async def user_data():
     # Testing FPL User Data Extractor
     user_id = 2723529
-    api = FPLOfficialAPI()
+    api = FPLOfficialAPIClient()
 
-    user_data_extractor = FPLUserDataExtractor(api, manager_id=user_id)
+    user_data_extractor = FPLUserProfileManager(api, manager_id=user_id)
     print("Testing FPL User Data Extractor tool...\n")
 
     user_profile = await user_data_extractor.extract_user_data()
