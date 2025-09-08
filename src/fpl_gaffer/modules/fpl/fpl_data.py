@@ -1,4 +1,4 @@
-from fpl_gaffer.modules import FPLOfficialAPIClient
+from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
 
