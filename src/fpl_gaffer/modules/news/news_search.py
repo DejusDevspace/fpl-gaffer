@@ -47,9 +47,9 @@ class FPLNewsSearchClient:
         try:
             return self.client.search(
                 query=query,
-                search_depth=settings.tavily_search_depth,
-                max_results=settings.tavily_max_search_results,
-                topic=settings.tavily_search_topic,
+                search_depth=settings.TAVILY_SEARCH_DEPTH,
+                max_results=settings.TAVILY_MAX_SEARCH_RESULTS,
+                topic=settings.TAVILY_SEARCH_TOPIC,
                 include_raw_content=False
             )
         except Exception as e:

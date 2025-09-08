@@ -8,7 +8,7 @@ from fpl_gaffer.utils import build_mappings, map_player, map_squad
 
 class FPLUserProfileManager:
     def __init__(self, api: FPLOfficialAPIClient, manager_id: int):
-        self.base_url = settings.fpl_api_base_url
+        self.base_url = settings.FPL_API_BASE_URL
         self.session = AsyncClient()
         self.api = api
         self.manager_id = manager_id

@@ -6,7 +6,7 @@ from fpl_gaffer.core.exceptions import FPLAPIError
 
 class FPLOfficialAPIClient:
     def __init__(self):
-        self.base_url = settings.fpl_api_base_url
+        self.base_url = settings.FPL_API_BASE_URL
         self.session = AsyncClient()
 
     async def get_bootstrap_data(self) -> Dict:

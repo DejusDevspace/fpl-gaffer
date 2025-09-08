@@ -10,20 +10,22 @@ class Settings(BaseSettings):
     )
 
     # Application settings
-    app_name: str = "FPL Gaffer"
+    APP_NAME: str = "FPL Gaffer"
 
     # User data settings
     FPL_MANAGER_ID: int = 2723529
 
+
     # FPL API settings
-    fpl_api_base_url: str = "https://fantasy.premierleague.com/api"
+    FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"
 
     # FPL News Searcher settings
     TAVILY_API_KEY: str
-    tavily_search_depth: str = "advanced"
-    tavily_max_search_results: int = 3
-    tavily_search_topic: str = "news"
+    TAVILY_SEARCH_DEPTH: str = "advanced"
+    TAVILY_MAX_SEARCH_RESULTS: int = 3
+    TAVILY_SEARCH_TOPIC: str = "news"
 
+    # TODO: Change params case to uppercase
     # FPL News Processor settings
     user_player_relevance_score: int = 3
     user_team_relevance_score: int = 1
