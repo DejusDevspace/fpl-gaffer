@@ -2,12 +2,14 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal, Dict, List
 from datetime import datetime
 from langchain.schema import Document
+from fpl_gaffer.settings import settings
 
 
 class WorkflowState(BaseModel):
     """State for the fpl gaffer workflow."""
 
     # Core state variables
+    user_id: int = settings.FPL_MANAGER_ID
     stage: Literal["extraction", "processing", "decision"] = "extraction"
     gameweek: Optional[int] = None
     deadline: Optional[datetime] = None
