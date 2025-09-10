@@ -5,6 +5,7 @@ from langchain.schema import Document
 from fpl_gaffer.settings import settings
 
 
+# TODO: Update state to use MessagesState and refactor variables
 class WorkflowState(BaseModel):
     """State for the fpl gaffer workflow."""
 
