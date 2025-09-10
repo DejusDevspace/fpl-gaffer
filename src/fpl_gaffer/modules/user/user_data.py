@@ -53,13 +53,13 @@ class FPLUserProfileManager:
         )
 
         # Create structured squad data
-        squad_data = self.extract_squad_info(team_data, players, teams, positions)
+        squad_data = await self.extract_squad_info(team_data, players, teams, positions)
         if squad_data is None:
             return None
 
         return squad_data
 
-    def extract_squad_info(
+    async def extract_squad_info(
         self,
         team_data: Dict,
         players: Dict,
@@ -82,7 +82,8 @@ class FPLUserProfileManager:
             "squad_value": gw_history.get("value", 0) / 10,
             "transfers": gw_history.get("event_transfers", 0),
             "transfers_cost": gw_history.get("event_transfers_cost", 0),
-            "money_itb": gw_history.get("bank", 0) / 10
+            "money_itb": gw_history.get("bank", 0) / 10,
+            "history": history_data if (history_data := await self.get_user_history()) else {}
         }
 
         # Get manager picks from team data
@@ -110,6 +111,17 @@ class FPLUserProfileManager:
                 squad_info["bench"].append(player_info)
 
         return squad_info
+
+    async def get_user_history(self) -> Dict:
+        """Get user history data."""
+        history_data = await self.api.get_manager_history(self.manager_id)
+
+        # Get history for the current season (along with chips used)
+        # Remove past seasons data
+        if "past" in history_data:
+            history_data.pop("past", None)
+
+        return history_data
 
     def build_user_profile(
         self,
@@ -141,4 +153,3 @@ class FPLUserProfileManager:
         return user_profile
 
     # TODO: Handle auto subs data for team...
-    # TODO: Get user history data (transfers, points, rank, etc.)
