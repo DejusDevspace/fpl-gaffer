@@ -4,8 +4,6 @@ from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import NewsSearchError
 from typing import Optional, List, Dict
 from langchain.schema import Document
-from langchain_community.document_loaders import UnstructuredURLLoader
-from asyncio import to_thread
 from dotenv import load_dotenv
 
 #  Load environment variables
@@ -46,6 +44,7 @@ class FPLNewsSearchClient:
                 search_depth=settings.TAVILY_SEARCH_DEPTH,
                 max_results=settings.TAVILY_MAX_SEARCH_RESULTS,
                 topic=settings.TAVILY_SEARCH_TOPIC,
+                include_answer=settings.INCLUDE_LLM_SUMMARY,
                 include_raw_content=False
             )
         except Exception as e:
