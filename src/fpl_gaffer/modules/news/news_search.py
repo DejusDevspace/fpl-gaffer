@@ -36,6 +36,7 @@ class FPLNewsSearchClient:
             )
         return self._client
 
+    # TODO: Remove func
     async def search_news(self) -> List[Document]:
         """Core function to search for all news."""
         await self._search_injury_news()
@@ -57,6 +58,7 @@ class FPLNewsSearchClient:
                 f"Failed to retrieve search results for query '{query}': {e}"
             ) from e
 
+    # TODO: Remove func
     async def _search_and_load_docs(self, queries: List[str], category: str = None) -> None:
         """Search for news from queries and loads them into the news documents."""
         for query in queries:
@@ -96,6 +98,11 @@ class FPLNewsSearchClient:
 
             self.news_docs.extend(response.get("results", []))
 
+    def search_player_news(self, player_names: List) -> List[Document]:
+        """Search news related to specific players."""
+        pass
+
+    # TODO: Make below functions dynamic to take in query
     async def _search_injury_news(self) -> None:
         """Search for FPL injury news."""
         await self._search_and_load_docs([
