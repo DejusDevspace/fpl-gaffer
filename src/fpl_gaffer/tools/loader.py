@@ -23,7 +23,7 @@ def create_tool_wrapper(func: Callable) -> Callable:
 
         except Exception as e:
             raise ToolExecutionError(
-                f"Error executing tool function: {func.__name__}"
+                f"Error executing tool function '{func.__name__}': {e}"
             ) from e
 
     def sync_wrapper(inputs: Dict | BaseModel) -> Any:
@@ -32,7 +32,7 @@ def create_tool_wrapper(func: Callable) -> Callable:
             return asyncio.run(async_wrapper(inputs))
         except Exception as e:
             raise ToolExecutionError(
-                f"Error executing tool function: {func.__name__}"
+                f"Error executing tool function '{func.__name__}': {e}"
             ) from e
 
     # Prefer async wrapper if function is async
