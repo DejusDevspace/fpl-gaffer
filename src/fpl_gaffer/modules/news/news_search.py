@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 #  Load environment variables
 _ = load_dotenv()
 
-# TODO: Refactor for tavily search, for agentic tool use
+
 class FPLNewsSearchClient:
     # Required env variables for FPL news searcher
     REQUIRED_ENV_VARS = ["TAVILY_API_KEY"]
@@ -19,7 +19,6 @@ class FPLNewsSearchClient:
     def __init__(self):
         self._validate_env_vars()
         self._client: Optional[TavilyClient] = None
-        self.news_docs: List[Dict] = []
 
     def _validate_env_vars(self) -> None:
         """Validate that the required environment variables are available."""
@@ -36,13 +35,9 @@ class FPLNewsSearchClient:
             )
         return self._client
 
-    # TODO: Remove func
     async def search_news(self) -> List[Document]:
         """Core function to search for all news."""
-        await self._search_injury_news()
-        await self._search_team_news()
-        await self._search_fpl_news()
-        return self.news_docs
+        return []
 
     async def _search(self, query: str) -> Dict:
         try:
@@ -58,46 +53,6 @@ class FPLNewsSearchClient:
                 f"Failed to retrieve search results for query '{query}': {e}"
             ) from e
 
-    # TODO: Remove func
-    async def _search_and_load_docs(self, queries: List[str], category: str = None) -> None:
-        """Search for news from queries and loads them into the news documents."""
-        for query in queries:
-            # Get the tavily api search results for each query
-            response = await self._search(query)
-
-            # Add query and category to each result's metadata
-            for result in response.get("results", []):
-                result["metadata"] = {
-                    "source": result.get("url", ""),
-                    "title": result.get("title", ""),
-                    "query": query,
-                    "category": category
-                }
-
-            # Get the urls from the search results
-            # urls = [result["url"] for result in response.get("results", []) if "url" in result
-
-            # if urls:
-            #     try:
-            #         # Fetch and parse the content from each URL
-            #         loader = UnstructuredURLLoader(urls=urls)
-            #         loaded_docs = await to_thread(loader.load)
-            #
-            #         # Update documents' metadata
-            #         for i, d in enumerate(loaded_docs):
-            #             d.metadata.update({
-            #                 "source": urls[i],
-            #                 "query": query,
-            #                 "category": category
-            #             })
-            #
-            #         # Extend the news_docs list with the new documents
-            #         self.news_docs.extend(loaded_docs)
-            #     except Exception as e:
-            #         raise NewsSearchError(f"Failed to load documents for query '{query}': {e}") from e
-
-            self.news_docs.extend(response.get("results", []))
-
     def search_player_news(self, player_names: List) -> List[Document]:
         """Search news related to specific players."""
         pass
@@ -105,25 +60,12 @@ class FPLNewsSearchClient:
     # TODO: Make below functions dynamic to take in query
     async def _search_injury_news(self) -> None:
         """Search for FPL injury news."""
-        await self._search_and_load_docs([
-            "Premier League team news injury reports press conference updates",
-            "FPL injury doubts and confirmed player absences",
-            "Fantasy Premier League player injuries and suspensions"
-        ], category="injury")
+        pass
 
     async def _search_team_news(self) -> None:
         """Search for premier league teams news."""
-        await self._search_and_load_docs([
-            "Fantasy Premier League benching risks and squad news",
-            "FPL rotation risk players starting XI updates",
-        ], category="team")
+        pass
 
     async def _search_fpl_news(self) -> None:
         """Search for FPL news and tips."""
-        await self._search_and_load_docs([
-            "FPL Scout selection and transfer recommendations latest",
-            "FPL Scout best tips and advice latest",
-            "Fantasy Premier League wildcard and transfer strategy",
-            "Fantasy Premier League best transfers this week",
-            "FPL captain picks latest expert analysis"
-        ], category="fpl")
+        pass
