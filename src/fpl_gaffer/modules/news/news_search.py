@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 #  Load environment variables
 _ = load_dotenv()
 
-
+# TODO: Refactor for tavily search, for agentic tool use
 class FPLNewsSearchClient:
     # Required env variables for FPL news searcher
     REQUIRED_ENV_VARS = ["TAVILY_API_KEY"]
