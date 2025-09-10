@@ -12,3 +12,8 @@ class FPLAPIError(FPLGafferError):
     """Custom class for FPL API errors."""
 
     pass
+
+class ToolExecutionError(FPLGafferError):
+    """Custom class for tool execution errors."""
+
+    pass
