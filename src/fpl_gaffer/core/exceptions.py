@@ -13,7 +13,12 @@ class FPLAPIError(FPLGafferError):
 
     pass
 
+class ToolError(FPLGafferError):
+    """Custom class for tool-related errors."""
+
+    pass
+
 class ToolExecutionError(FPLGafferError):
-    """Custom class for tool execution errors."""
+    """Custom class for tool wrapper execution errors."""
 
     pass
