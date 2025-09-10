@@ -33,11 +33,19 @@ class FPLNewsSearchClient:
             )
         return self._client
 
-    async def search_news(self) -> List[Document]:
-        """Core function to search for all news."""
-        return []
+    async def search_news(self, query: str) -> Dict:
+        """Core function to search for news."""
+        results = await self._search(query)
+
+        # TODO: Convert search results to documents?
+        return results
+
+    def _create_document_from_result(self, result: Dict) -> Document:
+        """Convert a tavily search result dictionary into a langchain Document."""
+        pass
 
     async def _search(self, query: str) -> Dict:
+        """Internal search helper."""
         try:
             return self.client.search(
                 query=query,
@@ -51,20 +59,3 @@ class FPLNewsSearchClient:
             raise NewsSearchError(
                 f"Failed to retrieve search results for query '{query}': {e}"
             ) from e
-
-    def search_player_news(self, player_names: List) -> List[Document]:
-        """Search news related to specific players."""
-        pass
-
-    # TODO: Make below functions dynamic to take in query
-    async def _search_injury_news(self) -> None:
-        """Search for FPL injury news."""
-        pass
-
-    async def _search_team_news(self) -> None:
-        """Search for premier league teams news."""
-        pass
-
-    async def _search_fpl_news(self) -> None:
-        """Search for FPL news and tips."""
-        pass
