@@ -1,11 +1,13 @@
 import inspect
+import asyncio
 from typing import List, Callable, Dict, Any
 from pydantic import BaseModel
 from langchain.tools import Tool
 from fpl_gaffer.core.exceptions import ToolExecutionError
-from fpl_gaffer.tools.news import search_news_tool,NewsSearchInput
-import asyncio
+from fpl_gaffer.tools.news import search_news_tool, NewsSearchInput
+from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
 
+# TODO: Investigate sync/async tool execution errors.
 def create_tool_wrapper(func: Callable) -> Callable:
     """Return an adaptible callable for sync/async functions for tools."""
     async def async_wrapper(inputs: Dict | BaseModel) -> Any:
@@ -48,8 +50,13 @@ def create_tools() -> List[Tool]:
                         "Use this when users ask about player/team news, injury, expert opinions, or general FPL updates.",
             func=create_tool_wrapper(search_news_tool),
             args_schema=NewsSearchInput
+        ),
+        Tool(
+            name="get_user_team_info_tool",
+            description="Get comprehensive information about a user's FPL team including squad, transfers, "
+                        "and finances. Use this when the user asks about their team, players, or financial situation.",
+            func=create_tool_wrapper(get_user_team_info_tool),
+            args_schema=UserTeamInfoInput
         )
     ]
     return tools
-
-search_tool = create_tools()[0]
