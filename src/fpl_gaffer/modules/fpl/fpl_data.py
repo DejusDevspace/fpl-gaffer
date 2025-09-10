@@ -44,3 +44,7 @@ class FPLDataManager:
             # "finished": next_gw.get("finished") if next_gw else False,
             "fixtures": next_gw_fixtures
         }
+
+    # TODO: Get fixtures data (next few x gameweeks)
+    # TODO: Get difficulty ratings over the next x gameweeks
+    # TODO: Get player stats (form, fixtures, injuries, etc.)
