@@ -48,3 +48,4 @@ class FPLDataManager:
     # TODO: Get fixtures data (next few x gameweeks)
     # TODO: Get difficulty ratings over the next x gameweeks
     # TODO: Get player stats (form, fixtures, injuries, etc.)
+    # TODO: Get particular player data
