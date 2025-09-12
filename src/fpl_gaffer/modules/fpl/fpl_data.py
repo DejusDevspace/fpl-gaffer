@@ -1,3 +1,4 @@
+from typing import List, Tuple, Dict
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
@@ -6,23 +7,16 @@ class FPLDataManager:
     def __init__(self, api: FPLOfficialAPIClient):
         self.api = api
 
-    async def get_gameweek_data(self):
+    async def get_gameweek_data(self) -> Dict:
         """Get info for the current gameweek and deadline."""
-        # Fetch bootstrap data
-        bootstrap_data = await self.api.get_bootstrap_data()
-        if bootstrap_data is None:
+        bootstrap_data, teams, next_gw = await self._fetch_bootstrap_and_next_gw()
+
+        if bootstrap_data is None or next_gw is None:
             return {}
-
-        # Build team mappings using fpl_mapper
-        _, teams, _ = build_mappings(bootstrap_data)
-
-        # Get next gameweek from bootstrap data
-        next_gw = next((
-            gw for gw in bootstrap_data.get("events", []) if gw["is_next"]
-        ), None)
 
         # Get fixtures for the current gameweek
         fixtures = await self.api.get_fixtures()
+
         if not fixtures:
             return {}
 
@@ -41,39 +35,29 @@ class FPLDataManager:
         return {
             "gameweek": next_gw.get("id") if next_gw else None,
             "deadline": next_gw.get("deadline_time") if next_gw else None,
-            # "finished": next_gw.get("finished") if next_gw else False,
             "fixtures": next_gw_fixtures
         }
 
-    # TODO: Get fixtures data (next few x gameweeks)
-    async def get_fixtures(self, num_gameweeks: int = 1):
-        """Get fixtures for the next x gameweeks."""
-        # Fetch bootstrap data
-        bootstrap_data = await self.api.get_bootstrap_data()
-        if bootstrap_data is None:
+    async def get_fixtures_for_range(self, num_gameweeks: int = 1) -> Dict:
+        """Get fixtures from the current gameweek to the next x gameweeks."""
+        bootstrap_data, teams, next_gw = await self._fetch_bootstrap_and_next_gw()
+
+        if bootstrap_data is None or next_gw is None:
             return {}
-
-        # Build team mappings using fpl_mapper
-        _, teams, _ = build_mappings(bootstrap_data)
-
-        # Get current gameweek
-        current_gw = next((
-            gw for gw in bootstrap_data.get("events", []) if gw["is_next"]
-        ), None)
-
-        if current_gw is None:
-            return {}
-
-        current_gw_id = current_gw.get("id")
 
         # Get fixtures for the next x gameweeks
-        fixtures = await self.api.get_fixtures()
-        if not fixtures:
+        all_fixtures = await self.api.get_fixtures()
+
+        if not all_fixtures:
             return {}
 
+        # Get gameweek range
+        start_gw = next_gw.get("id")
+        target_gws = set(range(start_gw, start_gw + num_gameweeks))
+
         upcoming_fixtures = []
-        for fixture in fixtures:
-            if fixture.get("event") and current_gw_id <= fixture.get("event") < current_gw_id + num_gameweeks:
+        for fixture in all_fixtures:
+            if fixture.get("event") in target_gws:
                 upcoming_fixtures.append({
                     "id": fixture.get("id"),
                     "gameweek": fixture.get("event"),
@@ -82,11 +66,30 @@ class FPLDataManager:
                     "kickoff_time": fixture.get("kickoff_time"),
                 })
 
-        return upcoming_fixtures
-
-    # TODO: Separate above funcs for DRY
-
+        return {
+            "from_gameweek": start_gw,
+            "to_gameweek": start_gw + num_gameweeks - 1,
+            "fixtures": upcoming_fixtures
+        }
 
     # TODO: Get difficulty ratings over the next x gameweeks
     # TODO: Get player stats (form, fixtures, injuries, etc.)
     # TODO: Get particular player data
+
+    async def _fetch_bootstrap_and_next_gw(self) -> Tuple[Dict, Dict, Dict]:
+        """Internal helper to fetch bootstrap data and next gameweek info."""
+        # Fetch bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if bootstrap_data is None:
+            return {}, {}, {}
+
+        # Build team mappings using fpl_mapper
+        _, teams, _ = build_mappings(bootstrap_data)
+
+        # Get next gameweek from bootstrap data
+        next_gw = next((
+            gw for gw in bootstrap_data.get("events", []) if gw.get("is_next")
+        ), None)
+
+        return bootstrap_data, teams, next_gw
