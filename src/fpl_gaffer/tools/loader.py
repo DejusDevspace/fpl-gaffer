@@ -4,7 +4,7 @@ from typing import List, Callable, Dict, Any
 from pydantic import BaseModel
 from langchain.tools import Tool
 from fpl_gaffer.core.exceptions import ToolExecutionError
-from fpl_gaffer.tools.news import search_news_tool, NewsSearchInput
+from fpl_gaffer.tools.news import news_search_tool, NewsSearchInput
 from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
 
 # TODO: Investigate sync/async tool execution errors.
@@ -45,10 +45,10 @@ def create_tools() -> List[Tool]:
     """Create and return a list of tools for the FPL Gaffer."""
     tools = [
         Tool(
-            name="search_news_tool",
+            name="news_search_tool",
             description="Search for FPL news, expert analysis, injury updates, press conference information, etc."
                         "Use this when users ask about player/team news, injury, expert opinions, or general FPL updates.",
-            func=create_tool_wrapper(search_news_tool),
+            func=create_tool_wrapper(news_search_tool),
             args_schema=NewsSearchInput
         ),
         Tool(

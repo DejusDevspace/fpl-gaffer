@@ -9,7 +9,7 @@ class NewsSearchInput(BaseModel):
     query: str = Field(..., description="The search query for news search.")
 
 
-async def search_news_tool(query: str) -> Dict:
+async def news_search_tool(query: str) -> Dict:
     """Search FPL-related news, expert analysis, scout tips, injury news, etc."""
     news_client = FPLNewsSearchClient()
 
