@@ -72,9 +72,33 @@ class FPLDataManager:
             "fixtures": upcoming_fixtures
         }
 
-    # TODO: Get difficulty ratings over the next x gameweeks
     # TODO: Get player stats (form, fixtures, injuries, etc.)
-    # TODO: Get particular player data
+
+    async def get_player_data(self, player_names: List[str]) -> List[Dict]:
+        """Get data for specific player(s) by name."""
+        # Get bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if bootstrap_data is None:
+            return []
+
+        # Get all players from bootstrap data
+        all_players = bootstrap_data.get("elements", [])
+        query_players = [n.lower() for n in player_names]
+
+        matched_players = []
+        for player in all_players:
+            # Get player names
+            first_name = player.get("first_name", "").lower()
+            second_name = player.get("second_name", "").lower()
+
+            for q in query_players:
+                # Match if the query appears in any of the name fields
+                if (q in first_name) or (q in second_name):
+                    matched_players.append(player)
+                    break
+
+        return matched_players
 
     async def _fetch_bootstrap_and_next_gw(self) -> Tuple[Dict, Dict, Dict]:
         """Internal helper to fetch bootstrap data and next gameweek info."""
