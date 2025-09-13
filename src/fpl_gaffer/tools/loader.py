@@ -51,35 +51,37 @@ def create_tools() -> List[Tool]:
         Tool(
             name="news_search_tool",
             description="Search for FPL news, expert analysis, injury updates, press conference information, etc."
-                        "Use this when users ask about player/team news, injury, expert opinions, or general FPL updates.",
+                        "Use this when you need information about player/team news, injury, expert opinions, or "
+                        "general FPL updates.",
             func=create_tool_wrapper(news_search_tool),
             args_schema=NewsSearchInput
         ),
         Tool(
             name="get_user_team_info_tool",
             description="Get comprehensive information about a user's FPL team including squad, transfers, "
-                        "and finances. Use this when the user asks about their team, players, or financial situation.",
+                        "and finances. Use this when you need information about the user's team, players, or "
+                        "financial situation.",
             func=create_tool_wrapper(get_user_team_info_tool),
             args_schema=UserTeamInfoInput
         ),
         Tool(
             name="get_players_by_position_tool",
-            description="Get players by position and max price. Use this when the user asks for transfer suggestions "
-                        "and you need to search for player replacements based on position and budget.",
+            description="Get players by position and max price. Use this when you need information for player "
+                        "replacements or transfer suggestions based on position and budget.",
             func=create_tool_wrapper(get_players_by_position_tool),
             args_schema=PlayerByPositionInput
         ),
         Tool(
             name="get_player_data_tool",
-            description="Get detailed player data including stats, form, and injuries. Use this when the user asks "
-                        "for information about specific players.",
+            description="Get detailed player data including stats, form, and injuries. Use this when you need "
+                        "information about specific players.",
             func=create_tool_wrapper(get_player_data_tool),
             args_schema=PlayerDataInput
         ),
         Tool(
             name="get_fixtures_for_range_tool",
-            description="Get fixtures from the current gameweek to the next x gameweeks. Use this when the user asks "
-                        "about upcoming fixtures or planning for future gameweeks.",
+            description="Get fixtures from the current gameweek to the next x gameweeks. Use this when you need "
+                        "information about upcoming fixtures or planning for future gameweeks.",
             func=create_tool_wrapper(get_fixtures_for_range_tool),
             args_schema=FixturesForRangeInput
         )
