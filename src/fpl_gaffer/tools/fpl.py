@@ -14,6 +14,11 @@ class PlayerDataInput(BaseModel):
     player_names: List[str] = Field(..., description="List of player(s) names to fetch data for.")
 
 
+class FixturesForRangeInput(BaseModel):
+    """Input schema for the fixtures for range tool."""
+    num_gameweeks: int = Field(..., description="Number of upcoming gameweeks to fetch fixtures for.")
+
+
 async def get_players_by_position_tool(
     position: Literal["GKP", "DEF", "MID", "FWD"],
     max_price: float
@@ -39,4 +44,13 @@ async def get_player_data_tool(player_names: List[str]) -> List[Dict]:
     except Exception as e:
         raise ToolError(f"Error while using player data tool: {e}") from e
 
-# TODO: Get fixtures data tool (next x gameweeks, difficulty ratings)
+async def get_fixtures_for_range_tool(num_gameweeks: int) -> Dict:
+    """Get fixtures from the current gameweek to the next x gameweeks."""
+    api = FPLOfficialAPIClient()
+    data_manager = FPLDataManager(api)
+
+    try:
+        fixtures = await data_manager.get_fixtures_for_range(num_gameweeks)
+        return fixtures
+    except Exception as e:
+        raise ToolError(f"Error while using fixtures for range tool: {e}") from e
