@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Literal
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
@@ -73,6 +73,37 @@ class FPLDataManager:
         }
 
     # TODO: Get player stats (form, fixtures, injuries, etc.)
+
+    async def get_players_by_position(
+        self,
+        position: Literal["GKP", "DEF", "MID", "FWD"],
+        max_price: float
+    ) -> List[Dict]:
+        """Get players by position and max price."""
+        # Get bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if bootstrap_data is None:
+            return []
+
+        # Build mappings
+        players, teams, positions = build_mappings(bootstrap_data)
+
+        # Find position ID from position short name
+        position_id = next((
+            pid for pid, pname in positions.items() if pname.lower() == position.lower()
+        ), None)
+
+        if position_id is None:
+            return []
+
+        matched_players = []
+        for player in bootstrap_data.get("elements", []):
+            if (player.get("element_type") == position_id and
+                    (player.get("now_cost", 0) / 10) <= max_price):
+                matched_players.append(player)
+
+        return matched_players
 
     async def get_player_data(self, player_names: List[str]) -> List[Dict]:
         """Get data for specific player(s) by name."""
