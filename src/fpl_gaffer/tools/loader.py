@@ -7,7 +7,8 @@ from fpl_gaffer.core.exceptions import ToolExecutionError
 from fpl_gaffer.tools.news import news_search_tool, NewsSearchInput
 from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
 from fpl_gaffer.tools.fpl import (
-    PlayerDataInput, PlayerByPositionInput, get_players_by_position_tool, get_player_data_tool
+    PlayerDataInput, PlayerByPositionInput, get_players_by_position_tool, get_player_data_tool,
+    FixturesForRangeInput, get_fixtures_for_range_tool
 )
 
 # TODO: Investigate sync/async tool execution errors.
@@ -74,6 +75,13 @@ def create_tools() -> List[Tool]:
                         "for information about specific players.",
             func=create_tool_wrapper(get_player_data_tool),
             args_schema=PlayerDataInput
+        ),
+        Tool(
+            name="get_fixtures_for_range_tool",
+            description="Get fixtures from the current gameweek to the next x gameweeks. Use this when the user asks "
+                        "about upcoming fixtures or planning for future gameweeks.",
+            func=create_tool_wrapper(get_fixtures_for_range_tool),
+            args_schema=FixturesForRangeInput
         )
     ]
     return tools
