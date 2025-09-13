@@ -6,6 +6,9 @@ from langchain.tools import Tool
 from fpl_gaffer.core.exceptions import ToolExecutionError
 from fpl_gaffer.tools.news import news_search_tool, NewsSearchInput
 from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
+from fpl_gaffer.tools.fpl import (
+    PlayerDataInput, PlayerByPositionInput, get_players_by_position_tool, get_player_data_tool
+)
 
 # TODO: Investigate sync/async tool execution errors.
 def create_tool_wrapper(func: Callable) -> Callable:
@@ -57,6 +60,20 @@ def create_tools() -> List[Tool]:
                         "and finances. Use this when the user asks about their team, players, or financial situation.",
             func=create_tool_wrapper(get_user_team_info_tool),
             args_schema=UserTeamInfoInput
+        ),
+        Tool(
+            name="get_players_by_position_tool",
+            description="Get players by position and max price. Use this when the user asks for transfer suggestions "
+                        "and you need to search for player replacements based on position and budget.",
+            func=create_tool_wrapper(get_players_by_position_tool),
+            args_schema=PlayerByPositionInput
+        ),
+        Tool(
+            name="get_player_data_tool",
+            description="Get detailed player data including stats, form, and injuries. Use this when the user asks "
+                        "for information about specific players.",
+            func=create_tool_wrapper(get_player_data_tool),
+            args_schema=PlayerDataInput
         )
     ]
     return tools
