@@ -39,6 +39,7 @@ async def user_data():
     user_profile = await user_data_extractor.extract_user_data()
     print(f"\nUser Profile for ID {user_id}:\n", user_profile)
 
+# TODO: Refactor notebook to use new modules dirs and functions.
 
 if __name__ == "__main__":
     # asyncio.run(fpl_data())
