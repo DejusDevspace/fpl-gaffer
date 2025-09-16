@@ -40,8 +40,6 @@ async def user_data():
     print(f"\nUser Profile for ID {user_id}:\n", user_profile)
 
 
-# TODO: Consider MVP refactor to chat flow and tool calling (agentic workflow)
-
 if __name__ == "__main__":
     # asyncio.run(fpl_data())
     asyncio.run(news_searcher())
