@@ -47,7 +47,7 @@ def create_tool_wrapper(func: Callable) -> Callable:
 
 def create_tools() -> List[Tool]:
     """Create and return a list of tools for the FPL Gaffer."""
-    tools = [
+    return [
         Tool(
             name="news_search_tool",
             description="Search for FPL news, expert analysis, injury updates, press conference information, etc."
@@ -86,4 +86,7 @@ def create_tools() -> List[Tool]:
             args_schema=FixturesForRangeInput
         )
     ]
-    return tools
+
+# Create tools and their descriptions at module load time
+TOOLS: List[Tool] = create_tools()
+TOOLS_DESCRIPTION = "\n".join(f"{t.name}: {t.description}" for t in TOOLS)
