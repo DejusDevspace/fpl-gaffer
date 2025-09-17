@@ -1,0 +1,6 @@
+FPL_GAFFER_SYSTEM_PROMPT = """
+
+"""
+
+MESSAGE_ANALYSIS_PROMPT = """
+"""

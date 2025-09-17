@@ -26,4 +26,9 @@ class Settings(BaseSettings):
     TAVILY_SEARCH_TOPIC: str = "news"
     INCLUDE_LLM_SUMMARY: str | bool = "advanced"
 
+    # Groq API settings
+    GROQ_API_KEY: str
+    GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL_TEMPERATURE: float = 0.4
+
 settings = Settings()
