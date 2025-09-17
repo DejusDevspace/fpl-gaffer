@@ -1,8 +1,8 @@
 import inspect
 import asyncio
-from typing import List, Callable, Dict, Any
-from pydantic import BaseModel
-from langchain.tools import Tool
+from typing import List, Callable, Dict, Any, Optional
+from pydantic import BaseModel, ConfigDict
+from langchain.tools import Tool, BaseTool
 from fpl_gaffer.core.exceptions import ToolExecutionError
 from fpl_gaffer.tools.news import news_search_tool, NewsSearchInput
 from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
@@ -10,6 +10,34 @@ from fpl_gaffer.tools.fpl import (
     PlayerDataInput, PlayerByPositionInput, get_players_by_position_tool, get_player_data_tool,
     FixturesForRangeInput, get_fixtures_for_range_tool
 )
+
+
+class AsyncFPLTool(BaseTool):
+    """Custom async tool wrapper to handle async execution in LangGraph context."""
+    func: Callable
+    input_schema: BaseModel = None
+
+    # Allow custom types
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    async def _arun(self, **kwargs) -> Any:
+        """Async execution of the tool."""
+        try:
+            return await self.func(**kwargs)
+        except Exception as e:
+            raise ToolExecutionError(
+                f"Error executing tool '{self.name}': {e}"
+            ) from e
+
+    def _run(self, **kwargs) -> Any:
+        """Fallback sync wrapper."""
+        try:
+            return asyncio.run(self.func(**kwargs))
+        except Exception as e:
+            raise ToolExecutionError(
+                f"Error executing tool '{self.name}': {e}"
+            ) from e
+
 
 # TODO: Investigate sync/async tool execution errors.
 def create_tool_wrapper(func: Callable) -> Callable:
@@ -45,10 +73,10 @@ def create_tool_wrapper(func: Callable) -> Callable:
     # Default to sync wrapper otherwise
     return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
 
-def create_tools() -> List[Tool]:
+def create_tools() -> List[AsyncFPLTool]:
     """Create and return a list of tools for the FPL Gaffer."""
     return [
-        Tool(
+        AsyncFPLTool(
             name="news_search_tool",
             description="Search for FPL news, expert analysis, injury updates, press conference information, etc."
                         "Use this when you need information about player/team news, injury, expert opinions, or "
@@ -56,7 +84,7 @@ def create_tools() -> List[Tool]:
             func=create_tool_wrapper(news_search_tool),
             args_schema=NewsSearchInput
         ),
-        Tool(
+        AsyncFPLTool(
             name="get_user_team_info_tool",
             description="Get comprehensive information about a user's FPL team including squad, transfers, "
                         "and finances. Use this when you need information about the user's team, players, or "
@@ -64,21 +92,21 @@ def create_tools() -> List[Tool]:
             func=create_tool_wrapper(get_user_team_info_tool),
             args_schema=UserTeamInfoInput
         ),
-        Tool(
+        AsyncFPLTool(
             name="get_players_by_position_tool",
             description="Get players by position and max price. Use this when you need information for player "
                         "replacements or transfer suggestions based on position and budget.",
             func=create_tool_wrapper(get_players_by_position_tool),
             args_schema=PlayerByPositionInput
         ),
-        Tool(
+        AsyncFPLTool(
             name="get_player_data_tool",
             description="Get detailed player data including stats, form, and injuries. Use this when you need "
                         "information about specific players.",
             func=create_tool_wrapper(get_player_data_tool),
             args_schema=PlayerDataInput
         ),
-        Tool(
+        AsyncFPLTool(
             name="get_fixtures_for_range_tool",
             description="Get fixtures from the current gameweek to the next x gameweeks. Use this when you need "
                         "information about upcoming fixtures or planning for future gameweeks.",
@@ -88,5 +116,5 @@ def create_tools() -> List[Tool]:
     ]
 
 # Create tools and their descriptions at module load time
-TOOLS: List[Tool] = create_tools()
+TOOLS: List[AsyncFPLTool] = create_tools()
 TOOLS_DESCRIPTION = "\n".join(f"{t.name}: {t.description}" for t in TOOLS)
