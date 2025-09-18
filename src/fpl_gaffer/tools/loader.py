@@ -81,7 +81,7 @@ def create_tools() -> List[AsyncFPLTool]:
             description="Search for FPL news, expert analysis, injury updates, press conference information, etc."
                         "Use this when you need information about player/team news, injury, expert opinions, or "
                         "general FPL updates.",
-            func=create_tool_wrapper(news_search_tool),
+            func=news_search_tool,
             args_schema=NewsSearchInput
         ),
         AsyncFPLTool(
@@ -89,28 +89,28 @@ def create_tools() -> List[AsyncFPLTool]:
             description="Get comprehensive information about a user's FPL team including squad, transfers, "
                         "and finances. Use this when you need information about the user's team, players, or "
                         "financial situation.",
-            func=create_tool_wrapper(get_user_team_info_tool),
+            func=get_user_team_info_tool,
             args_schema=UserTeamInfoInput
         ),
         AsyncFPLTool(
             name="get_players_by_position_tool",
             description="Get players by position and max price. Use this when you need information for player "
                         "replacements or transfer suggestions based on position and budget.",
-            func=create_tool_wrapper(get_players_by_position_tool),
+            func=get_players_by_position_tool,
             args_schema=PlayerByPositionInput
         ),
         AsyncFPLTool(
             name="get_player_data_tool",
             description="Get detailed player data including stats, form, and injuries. Use this when you need "
                         "information about specific players.",
-            func=create_tool_wrapper(get_player_data_tool),
+            func=get_player_data_tool,
             args_schema=PlayerDataInput
         ),
         AsyncFPLTool(
             name="get_fixtures_for_range_tool",
             description="Get fixtures from the current gameweek to the next x gameweeks. Use this when you need "
                         "information about upcoming fixtures or planning for future gameweeks.",
-            func=create_tool_wrapper(get_fixtures_for_range_tool),
+            func=get_fixtures_for_range_tool,
             args_schema=FixturesForRangeInput
         )
     ]

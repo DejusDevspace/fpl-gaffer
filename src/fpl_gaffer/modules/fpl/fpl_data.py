@@ -103,6 +103,8 @@ class FPLDataManager:
                     (player.get("now_cost", 0) / 10) <= max_price):
                 matched_players.append(player)
 
+        # TODO: Sort matched players by stat (points, etc), and return top x players.
+
         return matched_players
 
     async def get_player_data(self, player_names: List[str]) -> List[Dict]:
