@@ -29,6 +29,8 @@ class FPLDataManager:
                         "id": fixture.get("id"),
                         "home_team": teams.get(fixture.get("team_h"), "Unknown"),
                         "away_team": teams.get(fixture.get("team_a"), "Unknown"),
+                        "home_team_difficulty": fixture.get("team_h_difficulty", 0),
+                        "away_team_difficulty": fixture.get("team_a_difficulty", 0),
                         "kickoff_time": fixture.get("kickoff_time"),
                     })
 
