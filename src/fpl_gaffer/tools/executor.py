@@ -42,7 +42,7 @@ class AsyncToolExecutor:
 
         return results
 
-    # Helpers
+    # Utility functions
     def get_tool_by_name(self, tool_name: str) -> Optional[AsyncFPLTool]:
         """Get a specific tool by name."""
         return self.tools.get(tool_name)
