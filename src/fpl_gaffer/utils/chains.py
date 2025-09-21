@@ -8,6 +8,7 @@ class ToolResponse(BaseModel):
     tools_to_call: List[str] = Field(..., description="The list of tools to call")
 
 
+# TODO: Re-assess the get tools chain function
 def get_tools_chain():
     """"""
     model = get_chat_model().with_structured_output(ToolResponse)
