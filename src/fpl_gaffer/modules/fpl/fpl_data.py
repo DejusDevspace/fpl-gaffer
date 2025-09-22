@@ -37,7 +37,7 @@ class FPLDataManager:
         return {
             "gameweek": next_gw.get("id") if next_gw else None,
             "deadline": next_gw.get("deadline_time") if next_gw else None,
-            "fixtures": next_gw_fixtures
+            # "fixtures": next_gw_fixtures
         }
 
     async def get_fixtures_for_range(self, num_gameweeks: int = 1) -> Dict:

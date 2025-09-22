@@ -1,16 +1,13 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Literal, Dict, List
-from datetime import datetime
-from langchain.schema import Document
+from typing import Optional, Dict, List, Any
 from langgraph.graph import MessagesState
-from fpl_gaffer.settings import settings
 
 
-# TODO: Update state to use MessagesState and refactor variables
 class WorkflowState(MessagesState):
     """State for the FPL Gaffer workflow."""
 
-    # Core state variables
+    response: str
     user_id: int
-    gameweek: Dict # Gameweek data dict
-    tool_calls: List[str]
+    gameweek: Dict
+    tool_calls: List[Dict[str, Any]]
+    tool_results: Dict[str, Any]
+

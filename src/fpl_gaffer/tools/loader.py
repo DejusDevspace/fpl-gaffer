@@ -95,7 +95,8 @@ def create_tools() -> List[AsyncFPLTool]:
         AsyncFPLTool(
             name="get_players_by_position_tool",
             description="Get players by position and max price. Use this when you need information for player "
-                        "replacements or transfer suggestions based on position and budget.",
+                        "replacements or transfer suggestions based on position and budget. Use position short forms "
+                        "like GKP, DEF, MID, FWD.000",
             func=get_players_by_position_tool,
             args_schema=PlayerByPositionInput
         ),
@@ -115,6 +116,25 @@ def create_tools() -> List[AsyncFPLTool]:
         )
     ]
 
+def get_tool_prompt_description(tools: List[AsyncFPLTool]) -> str:
+    """Return a formatted string describing all tools and their args."""
+    lines = []
+    for i, tool in enumerate(tools, 1):
+        # Collect argument name: type pairs from the Pydantic model
+        if tool.args_schema and issubclass(tool.args_schema, BaseModel):
+            fields = [
+                f"{name}: {field.annotation.__name__}"
+                for name, field in tool.args_schema.model_fields.items()
+            ]
+            args = ", ".join(fields) if fields else "none"
+        else:
+            args = "none"
+        # Build the line with name, args, and description
+        lines.append(
+            f"  {i}. {tool.name}: args {{{{{args}}}}}\n     {tool.description}"
+        )
+    return "\n".join(lines)
+
 # Create tools and their descriptions at module load time
 TOOLS: List[AsyncFPLTool] = create_tools()
-TOOLS_DESCRIPTION = "\n".join(f"{t.name}: {t.description}" for t in TOOLS)
+TOOLS_DESCRIPTION = get_tool_prompt_description(TOOLS)

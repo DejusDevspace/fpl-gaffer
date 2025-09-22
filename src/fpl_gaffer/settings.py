@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # Groq API settings
     GROQ_API_KEY: str
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_TEMPERATURE: float = 0.4
+    GROQ_MODEL_TEMPERATURE: float = 0.0
 
 settings = Settings()
+

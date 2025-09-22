@@ -24,7 +24,7 @@ class AsyncToolExecutor:
         tasks = []
         for tc in tool_calls:
             tool_name = tc.get("name")
-            tool_args = tc.get("args", {})
+            tool_args = tc.get("arguments", {})
 
             if tool_name in self.tools:
                 task = self.execute_tool(tool_name, **tool_args)

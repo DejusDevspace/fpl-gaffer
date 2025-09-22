@@ -1,21 +1,29 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict, Any, Optional
 from fpl_gaffer.utils.helpers import get_chat_model
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from fpl_gaffer.core.prompts import FPL_GAFFER_SYSTEM_PROMPT, TOOL_ANALYSIS_PROMPT
+from fpl_gaffer.core.prompts import FPL_GAFFER_SYSTEM_PROMPT, MESSAGE_ANALYSIS_PROMPT
+from fpl_gaffer.settings import settings
 
-class ToolResponse(BaseModel):
-    tools_to_call: List[str] = Field(..., description="The list of tools to call")
+class ToolAnalysis(BaseModel):
+    """Result of analysing a user-message for potential tool calls."""
+    call_tools: bool = Field(
+        ...,
+        description="Whether tool(s) needs to be called."
+    )
+    tool_calls: Optional[List[Dict[str, Any]]] = Field(
+        ...,
+        description="The formatted tool(s) to call."
+    )
 
 
-# TODO: Re-assess the get tools chain function
 def get_tools_chain():
-    """"""
-    model = get_chat_model().with_structured_output(ToolResponse)
+    """Create a chain to analyze user message and return structured tool analysis output."""
+    model = get_chat_model().with_structured_output(ToolAnalysis)
 
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", TOOL_ANALYSIS_PROMPT),
+            ("system", MESSAGE_ANALYSIS_PROMPT),
             MessagesPlaceholder(variable_name="messages")
         ]
     )

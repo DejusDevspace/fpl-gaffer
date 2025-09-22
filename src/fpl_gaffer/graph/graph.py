@@ -2,7 +2,11 @@ from functools import lru_cache
 from fpl_gaffer.settings import settings
 from langgraph.graph import StateGraph, START, END
 from fpl_gaffer.graph.state import WorkflowState
-from fpl_gaffer.graph.nodes import *
+from fpl_gaffer.graph.nodes import (
+    context_injection_node, message_analysis_node, tool_execution_node,
+    message_generation_node
+)
+from fpl_gaffer.graph.edges import tool_decision
 
 @lru_cache(maxsize=1)
 def create_workflow_graph():
@@ -10,7 +14,21 @@ def create_workflow_graph():
     graph_builder = StateGraph(WorkflowState)
 
     # Add nodes
+    graph_builder.add_node("context_injection_node", context_injection_node)
+    graph_builder.add_node("message_analysis_node", message_analysis_node)
+    graph_builder.add_node("tool_execution_node", tool_execution_node)
+    graph_builder.add_node("message_generation_node", message_generation_node)
 
-    # Create the workflow
+    # Define the workflow
+    graph_builder.add_edge("context_injection_node", "message_analysis_node")
+
+    graph_builder.add_conditional_edges("message_analysis_node", tool_decision)
+
+    graph_builder.add_edge("tool_execution_node", "message_generation_node")
+    # graph_builder.add_edge("message_analysis_node", "message_generation_node")
+    graph_builder.add_edge("message_generation_node", END)
+
+    # Set the graph entry point
+    graph_builder.set_entry_point("context_injection_node")
 
     return graph_builder
