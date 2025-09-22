@@ -79,6 +79,8 @@ async def message_generation_node(state: WorkflowState) -> Dict:
             """
 
     response = await model.apredict(response_prompt)
+    state["tool_results"] = {}
+    state["tool_calls"] = []
     return {"response": response}
 
 def response_validation_node(state: WorkflowState) -> Dict:
