@@ -107,7 +107,7 @@ class FPLDataManager:
 
         # TODO: Sort matched players by stat (points, etc), and return top x players.
 
-        return matched_players
+        return matched_players[:5]
 
     async def get_player_data(self, player_names: List[str]) -> List[Dict]:
         """Get data for specific player(s) by name."""
