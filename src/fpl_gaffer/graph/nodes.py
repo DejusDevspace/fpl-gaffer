@@ -64,7 +64,7 @@ async def message_generation_node(state: WorkflowState) -> Dict:
             {state["user_id"], state["gameweek"]}
 
             Tool Results:
-            {state["tool_results"]}
+            {state.get("tool_results", None)}
 
             Guidelines:
             1. Be conversational and friendly

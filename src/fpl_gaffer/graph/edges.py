@@ -5,7 +5,7 @@ async def tool_decision(
     state: WorkflowState
 ) -> Literal["message_generation_node", "tool_execution_node"]:
     # Node to decide whether to go to tool execution node.
-    if state["tool_calls"] is None:
+    if state.get("tool_calls", None) is None:
         print("taking message_generation_node")
         return "message_generation_node"
     return "tool_execution_node"
