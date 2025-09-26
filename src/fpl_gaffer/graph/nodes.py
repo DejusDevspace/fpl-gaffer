@@ -16,14 +16,26 @@ from fpl_gaffer.utils.helpers import get_chat_model
 # etc...would also consider edges for tool calling or other conditional flows.
 async def context_injection_node(state: WorkflowState) -> Dict:
     # Node to get user data, current gw data, etc...initial data for state
-    if state.get("user_id", None) is None or state.get("gameweek", None) is None:
-        # Use manager ID from setting for now
+    # Get user id (if not available)
+    # Would use ID from config for now, would replace with db implementation much later
+    if state.get("user_id", 0) != settings.FPL_MANAGER_ID or state.get("user_data", None) is None:
+        # Get user data
         user_id = settings.FPL_MANAGER_ID
         api = FPLOfficialAPIClient()
-        data_manager = FPLDataManager(api)
-        gameweek_data = await data_manager.get_gameweek_data()
 
-        return {"user_id": user_id, "gameweek": gameweek_data}
+        profile_manager = FPLUserProfileManager(api, user_id)
+        user_data = profile_manager.extract_user_data()
+
+        # Get gameweek information
+        data_manager = FPLDataManager(api)
+        gw_data = data_manager.get_gameweek_data()
+
+        # Update state
+        return {
+            "user_id": user_id,
+            "user_data": user_data,
+            "gameweek_data": gw_data
+        }
 
     return {}
 

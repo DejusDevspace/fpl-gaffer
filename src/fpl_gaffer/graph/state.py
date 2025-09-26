@@ -7,7 +7,8 @@ class WorkflowState(MessagesState):
 
     response: str
     user_id: int
-    gameweek: Dict
+    user_data: Dict[str, Any]
+    gameweek_data: Dict
     tool_calls: List[Dict[str, Any]]
     tool_results: Dict[str, Any]
 

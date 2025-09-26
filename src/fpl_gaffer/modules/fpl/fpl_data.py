@@ -7,8 +7,8 @@ class FPLDataManager:
     def __init__(self, api: FPLOfficialAPIClient):
         self.api = api
 
-    async def get_gameweek_data(self) -> Dict:
-        """Get info for the current gameweek and deadline."""
+    async def get_gameweek_data(self, include_fixtures: bool = True) -> Dict:
+        """Get info for the current gameweek with fixtures and deadline."""
         bootstrap_data, teams, next_gw = await self._fetch_bootstrap_and_next_gw()
 
         if bootstrap_data is None or next_gw is None:
@@ -37,7 +37,7 @@ class FPLDataManager:
         return {
             "gameweek": next_gw.get("id") if next_gw else None,
             "deadline": next_gw.get("deadline_time") if next_gw else None,
-            # "fixtures": next_gw_fixtures
+            "fixtures": next_gw_fixtures if include_fixtures else None
         }
 
     async def get_fixtures_for_range(self, num_gameweeks: int = 1) -> Dict:
