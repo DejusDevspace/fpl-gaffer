@@ -55,6 +55,7 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
 async def message_generation_node(state: WorkflowState) -> Dict:
     # Node to provide structured response for users
     model = get_chat_model()
+    # TODO: Investigate prompt variables.
     response_prompt = f"""
             You are FPL Gaffer, a Fantasy Premier League assistant. Provide a helpful, context-aware response.
 
