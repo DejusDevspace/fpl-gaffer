@@ -5,10 +5,10 @@ from langchain_core.messages import AIMessage, ToolMessage
 from fpl_gaffer.modules import (
     FPLOfficialAPIClient, FPLUserProfileManager, FPLDataManager
 )
+from fpl_gaffer.core.prompts import MESSAGE_ANALYSIS_PROMPT, FPL_GAFFER_SYSTEM_PROMPT
 from fpl_gaffer.tools.executor import AsyncToolExecutor
 from fpl_gaffer.utils.chains import get_tools_chain, get_gaffer_response_chain
 from fpl_gaffer.settings import settings
-from fpl_gaffer.utils.helpers import get_chat_model
 
 
 # TODO: Decide nodes
@@ -24,11 +24,11 @@ async def context_injection_node(state: WorkflowState) -> Dict:
         api = FPLOfficialAPIClient()
 
         profile_manager = FPLUserProfileManager(api, user_id)
-        user_data = profile_manager.extract_user_data()
+        user_data = await profile_manager.extract_user_data()
 
         # Get gameweek information
         data_manager = FPLDataManager(api)
-        gw_data = data_manager.get_gameweek_data()
+        gw_data = await data_manager.get_gameweek_data()
 
         # Update state
         return {
@@ -41,11 +41,29 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
 async def message_analysis_node(state: WorkflowState) -> Dict:
     # Node to analyze user messages to get tools to be called?
-    chain = get_tools_chain()
-    print(state["messages"][-1:])
-    response = await chain.ainvoke({"messages": state["messages"][-1:]})
+    # prompt = MESSAGE_ANALYSIS_PROMPT.format(
+        # user_id=state["user_id"],
+        # gameweek_number=state["gameweek_data"].get("gameweek", "N/A"),
+        # team_name=state["user_data"].get("team_name", "Unknown"),
+        # total_points=state["user_data"].get("total_points", "N/A"),
+        # overall_rank=state["user_data"].get("overall_rank", "N/A")
+    # )
+    # print("Prompt:\n", prompt)
+    # Pass updated prompt to tools chain
+    chain = get_tools_chain(MESSAGE_ANALYSIS_PROMPT)
 
-    print("LLM response:", response)
+    print(state["messages"][-1:])
+    print("State:", state)
+    response = await chain.ainvoke({
+        "messages": state["messages"],
+        "user_id": state["user_id"],
+        "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
+        "team_name": state["user_data"].get("team_name", "Unknown"),
+        "total_points": state["user_data"].get("total_points", "N/A"),
+        "overall_rank": state["user_data"].get("overall_rank", "N/A")
+    })
+
+    print("Message analysis response:", response)
 
     if response.call_tools:
         return {"tool_calls": response.tool_calls}
@@ -66,34 +84,28 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
 
 async def message_generation_node(state: WorkflowState) -> Dict:
     # Node to provide structured response for users
-    model = get_chat_model()
-    # TODO: Investigate prompt variables.
-    response_prompt = f"""
-            You are FPL Gaffer, a Fantasy Premier League assistant. Provide a helpful, context-aware response.
+    # prompt = FPL_GAFFER_SYSTEM_PROMPT.format(
+    #     user_id=state["user_id"],
+    #     gameweek_number=state["gameweek_data"].get("gameweek", "N/A"),
+    #     team_name=state["user_data"].get("team_name", "Unknown"),
+    #     total_points=state["user_data"].get("total_points", "N/A"),
+    #     overall_rank=state["user_data"].get("overall_rank", "N/A"),
+    #     tool_results=json.dumps(state.get("tool_results", "Not applicable"), indent=2)
+    # )
 
-            User Message: "{state["messages"]}"
+    # Pass updated prompt to gaffer chain
+    chain = get_gaffer_response_chain(FPL_GAFFER_SYSTEM_PROMPT)
+    response = await chain.ainvoke({
+        "messages": state["messages"],
+        "user_id": state["user_id"],
+        "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
+        "team_name": state["user_data"].get("team_name", "Unknown"),
+        "total_points": state["user_data"].get("total_points", "N/A"),
+        "overall_rank": state["user_data"].get("overall_rank", "N/A"),
+        "tool_results": json.dumps(state.get("tool_results", "Not applicable"), indent=2)
+    })
+    print("Final Output", response)
 
-            User's FPL Context:
-            {state["user_id"], state["gameweek"]}
-
-            Tool Results:
-            {state.get("tool_results", None)}
-
-            Guidelines:
-            1. Be conversational and friendly
-            2. Provide specific, actionable advice based on the user's actual team
-            3. Reference specific players, fixtures, or data when relevant
-            4. If suggesting transfers, consider the user's budget and team needs
-            5. For captain recommendations, explain your reasoning
-            6. Keep responses concise but informative
-            7. If there are errors in tool results, gracefully handle them
-
-            Generate a WhatsApp-friendly response (no markdown, casual tone).
-            """
-
-    response = await model.apredict(response_prompt)
-    state["tool_results"] = {}
-    state["tool_calls"] = []
     return {"response": response}
 
 def response_validation_node(state: WorkflowState) -> Dict:

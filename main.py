@@ -42,7 +42,7 @@ async def user_data():
 # TODO: Refactor notebook to use new modules dirs and functions.
 
 if __name__ == "__main__":
-    # asyncio.run(fpl_data())
-    asyncio.run(news_searcher())
+    asyncio.run(fpl_data())
+    # asyncio.run(news_searcher())
     # asyncio.run(user_data())
     # pass

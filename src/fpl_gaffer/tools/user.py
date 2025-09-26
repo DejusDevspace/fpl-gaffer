@@ -13,7 +13,7 @@ class UserTeamInfoInput(BaseModel):
 async def get_user_team_info_tool(manager_id: int, gameweek: int) -> Dict:
     """Get user team information like budget, squad, transfers, etc."""
     api = FPLOfficialAPIClient()
-    team_manager = FPLTeamDataManger(api, manager_id, gameweek)
+    team_manager = FPLTeamDataManger(api, manager_id, (gameweek - 1))
 
     try:
         team_data = await team_manager.extract_team_data()

@@ -88,7 +88,8 @@ def create_tools() -> List[AsyncFPLTool]:
             name="get_user_team_info_tool",
             description="Get comprehensive information about a user's FPL team including squad, transfers, "
                         "and finances. Use this when you need information about the user's team, players, or "
-                        "financial situation.",
+                        "financial situation. When searching for picks, always use the previous gameweek number and not"
+                        "current one. E.g if current gw is 5, use 4 as argumanet for getting user team info.",
             func=get_user_team_info_tool,
             args_schema=UserTeamInfoInput
         ),

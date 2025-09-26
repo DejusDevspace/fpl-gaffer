@@ -38,3 +38,5 @@ class FPLUserProfileManager:
             "overall_rank": manager_data.get("summary_overall_rank"),
             "total_points": manager_data.get("summary_overall_points"),
         }
+
+    # TODO: Save and retrieve user most recent gameweek scores, transfers, etc.
