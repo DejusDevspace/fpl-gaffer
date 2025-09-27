@@ -5,9 +5,12 @@ from langchain_core.messages import AIMessage, ToolMessage
 from fpl_gaffer.modules import (
     FPLOfficialAPIClient, FPLUserProfileManager, FPLDataManager
 )
-from fpl_gaffer.core.prompts import MESSAGE_ANALYSIS_PROMPT, FPL_GAFFER_SYSTEM_PROMPT
+from fpl_gaffer.core.prompts import (
+    MESSAGE_ANALYSIS_PROMPT, FPL_GAFFER_SYSTEM_PROMPT,
+    RESPONSE_VALIDATION_PROMPT, RESPONSE_RETRY_PROMPT
+)
 from fpl_gaffer.tools.executor import AsyncToolExecutor
-from fpl_gaffer.utils.chains import get_tools_chain, get_gaffer_response_chain
+from fpl_gaffer.utils.chains import get_tools_chain, get_gaffer_response_chain, get_response_validation_chain
 from fpl_gaffer.settings import settings
 
 
@@ -34,7 +37,8 @@ async def context_injection_node(state: WorkflowState) -> Dict:
         return {
             "user_id": user_id,
             "user_data": user_data,
-            "gameweek_data": gw_data
+            "gameweek_data": gw_data,
+            "is_retry": False
         }
 
     return {}
@@ -49,6 +53,15 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
         # overall_rank=state["user_data"].get("overall_rank", "N/A")
     # )
     # print("Prompt:\n", prompt)
+    # TODO: Handle loop-back from response validation node
+    additional_context = "N/A"
+    if state["is_retry"] and not state.get("validation_passed"):
+        # Update to capture errors and suggestions
+        additional_context = RESPONSE_RETRY_PROMPT.format(
+            validation_errors=state["validation_errors"],
+            validation_suggestions=state["validation_suggestions"]
+        )
+
     # Pass updated prompt to tools chain
     chain = get_tools_chain(MESSAGE_ANALYSIS_PROMPT)
 
@@ -60,7 +73,8 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
         "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
         "team_name": state["user_data"].get("team_name", "Unknown"),
         "total_points": state["user_data"].get("total_points", "N/A"),
-        "overall_rank": state["user_data"].get("overall_rank", "N/A")
+        "overall_rank": state["user_data"].get("overall_rank", "N/A"),
+        "additional_context": additional_context
     })
 
     print("Message analysis response:", response)
@@ -108,9 +122,27 @@ async def message_generation_node(state: WorkflowState) -> Dict:
 
     return {"response": response}
 
-def response_validation_node(state: WorkflowState) -> Dict:
+async def response_validation_node(state: WorkflowState) -> Dict:
     # Node to assess response before sending to user (can loop back to tool calls, etc)
-    pass
+    chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
+    response = await chain.ainvoke({
+        "user_query": state["messages"][-1],
+        "generated_response": state["response"],
+        "tool_results": state["tool_results"]
+    })
+
+    print("Validation response:", response)
+
+    return {
+        "validation_passed": response.validation_passed,
+        "validation_errors": response.errors,
+        "validation_suggestions": response.suggestions
+    }
+
+def retry_response_node(state: WorkflowState) -> Dict:
+    # Node to prepare for response retry
+    # Clear tools and update is_retry state var
+    return {"is_retry": True, "tool_results": {}}
 
 # I would select few of the nodes above for use, and merge some eventually.
 # Not all would be standalone nodes.
