@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "gaffer": "./src/fpl_gaffer/graph/graph.py:graph"
+  },
+  "env": ".env",
+  "python_version": "3.13"
+}

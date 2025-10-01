@@ -35,3 +35,6 @@ def create_workflow_graph():
     graph_builder.add_edge("retry_response_node", "message_analysis_node")
 
     return graph_builder
+
+# Compile the graph for LangGraph studio
+graph = create_workflow_graph().compile()
