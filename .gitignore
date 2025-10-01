@@ -210,3 +210,6 @@ rough.py
 
 # Data storage
 data/
+
+# Other
+.langgraph_api/
