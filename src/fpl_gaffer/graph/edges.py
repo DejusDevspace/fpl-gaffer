@@ -1,5 +1,5 @@
 from typing import Literal, Any
-from fpl_gaffer.graph.graph import WorkflowState
+from fpl_gaffer.graph.state import WorkflowState
 from langgraph.graph import END
 
 def tool_decision(
