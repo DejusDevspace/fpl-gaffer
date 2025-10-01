@@ -31,5 +31,8 @@ class Settings(BaseSettings):
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
     GROQ_MODEL_TEMPERATURE: float = 0.0
 
+    # Memory settings
+    SHORT_TERM_MEMORY_DB_PATH: str = "/data/memory.db"
+
 settings = Settings()
 

@@ -14,6 +14,7 @@ dependencies = [
     "langchain-core>=0.3.72",
     "langchain-groq>=0.3.7",
     "langgraph>=0.6.4",
+    "langgraph-checkpoint-sqlite>=2.0.11",
     "lxml-html-clean>=0.4.2",
     "newspaper3k>=0.2.8",
     "pydantic>=2.11.7",
