@@ -56,11 +56,14 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
     # TODO: Handle loop-back from response validation node
     additional_context = "N/A"
     if state["is_retry"] and not state.get("validation_passed"):
+        print("Retrying response due to validation errors...")
         # Update to capture errors and suggestions
         additional_context = RESPONSE_RETRY_PROMPT.format(
             validation_errors=state["validation_errors"],
             validation_suggestions=state["validation_suggestions"]
         )
+        # Reset retry flag
+        state["is_retry"] = False
 
     # Pass updated prompt to tools chain
     chain = get_tools_chain(MESSAGE_ANALYSIS_PROMPT)
@@ -86,6 +89,11 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
 
 async def tool_execution_node(state: WorkflowState) -> Dict:
     # Node to call tools and return tool results
+    # Verify tool calls exist
+    if not state.get("tool_calls", None):
+        print("No tool calls to execute.")
+        return {"tool_results": {}}
+
     executor = AsyncToolExecutor()
     results = await executor.execute_multiple_tools(state["tool_calls"])
 
@@ -126,23 +134,32 @@ async def response_validation_node(state: WorkflowState) -> Dict:
     # Node to assess response before sending to user (can loop back to tool calls, etc)
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
     response = await chain.ainvoke({
-        "user_query": state["messages"][-1],
+        "context": state["messages"],
         "generated_response": state["response"],
         "tool_results": state["tool_results"]
     })
 
     print("Validation response:", response)
 
-    return {
-        "validation_passed": response.validation_passed,
-        "validation_errors": response.errors,
-        "validation_suggestions": response.suggestions
-    }
+    if response.validation_passed:
+        return {
+            "validation_passed": response.validation_passed,
+            "validation_errors": response.errors,
+            "validation_suggestions": response.suggestions,
+            "messages": state["response"]
+        }
+    else:
+        return {
+            "validation_passed": response.validation_passed,
+            "validation_errors": response.errors,
+            "validation_suggestions": response.suggestions
+        }
+
 
 def retry_response_node(state: WorkflowState) -> Dict:
     # Node to prepare for response retry
-    # Clear tools and update is_retry state var
-    return {"is_retry": True, "tool_results": {}}
+    # Reset tool calls and results and update retry flag
+    return {"is_retry": True, "tool_results": {}, "tool_calls": []}
 
 # I would select few of the nodes above for use, and merge some eventually.
 # Not all would be standalone nodes.

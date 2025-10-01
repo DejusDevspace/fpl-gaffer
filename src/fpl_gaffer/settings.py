@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     GROQ_MODEL_TEMPERATURE: float = 0.0
 
     # Memory settings
-    SHORT_TERM_MEMORY_DB_PATH: str = "/data/memory.db"
+    SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
 
 settings = Settings()
 

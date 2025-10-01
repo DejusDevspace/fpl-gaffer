@@ -87,7 +87,7 @@ If no tool matches the user's query, simply respond with:
 RESPONSE_VALIDATION_PROMPT = """
 You are a validation assistant for FPL responses. Your job is to check if the generated response contains any hallucinations or unsupported claims.
 
-User Query: {user_query}
+Context: {context}
 Generated Response: {generated_response}
 Tool Results: {tool_results}
 
