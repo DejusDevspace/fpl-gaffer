@@ -93,7 +93,8 @@ Tool Results: {tool_results}
 
 Check for these potential issues:
 1. HALLUCINATIONS: Claims not supported by tool results (e.g., mentioning players not in the data)
-2. PRICE ACCURACY: Suggested players must be within stated budget constraints
+2. PRICE ACCURACY: Suggested players must be within stated budget constraints (be careful not to include only budget 
+money in the bank, but also from possible player sales).
 3. FIXTURE CLAIMS: Any fixture-related advice must be backed by actual fixture data
 4. PLAYER EXISTENCE: All mentioned players must exist in the tool results
 5. COMPLETENESS: Response should address the main points of the user's query
