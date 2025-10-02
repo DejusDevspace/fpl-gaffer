@@ -132,9 +132,18 @@ async def message_generation_node(state: WorkflowState) -> Dict:
 
 async def response_validation_node(state: WorkflowState) -> Dict:
     # Node to assess response before sending to user (can loop back to tool calls, etc)
+    user_info = {
+        "user_id": state["user_id"],
+        "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
+        "team_name": state["user_data"].get("team_name", "Unknown"),
+        "total_points": state["user_data"].get("total_points", "N/A"),
+        "overall_rank": state["user_data"].get("overall_rank", "N/A"),
+    }
+
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
     response = await chain.ainvoke({
         "context": state["messages"],
+        "user_info": json.dumps(user_info, indent=2),
         "generated_response": state["response"],
         "tool_results": state["tool_results"]
     })
