@@ -1,5 +1,5 @@
 import os
-from tavily import TavilyClient
+from tavily.async_tavily import AsyncTavilyClient
 from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import NewsSearchError
 from typing import Optional, List, Dict
@@ -16,7 +16,7 @@ class FPLNewsSearchClient:
 
     def __init__(self):
         self._validate_env_vars()
-        self._client: Optional[TavilyClient] = None
+        self._client: Optional[AsyncTavilyClient] = None
 
     def _validate_env_vars(self) -> None:
         """Validate that the required environment variables are available."""
@@ -25,10 +25,10 @@ class FPLNewsSearchClient:
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
     @property
-    def client(self) -> TavilyClient:
+    def client(self) -> AsyncTavilyClient:
         """Get or create TavilyClient instance (singleton pattern)."""
         if self._client is None:
-            self._client = TavilyClient(
+            self._client = AsyncTavilyClient(
                 api_key=settings.TAVILY_API_KEY
             )
         return self._client
@@ -47,7 +47,7 @@ class FPLNewsSearchClient:
     async def _search(self, query: str) -> Dict:
         """Internal search helper."""
         try:
-            return self.client.search(
+            return await self.client.search(
                 query=query,
                 search_depth=settings.TAVILY_SEARCH_DEPTH,
                 max_results=settings.TAVILY_MAX_SEARCH_RESULTS,
