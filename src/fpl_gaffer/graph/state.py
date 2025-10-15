@@ -19,6 +19,7 @@ class WorkflowState(MessagesState):
 
     # Validation and control flow
     is_retry: bool
+    retry_count: int
     validation_passed: bool
     validation_errors: List[str]
     validation_suggestions: List[str]

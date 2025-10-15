@@ -44,15 +44,6 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
 async def message_analysis_node(state: WorkflowState) -> Dict:
     # Node to analyze user messages to get tools to be called?
-    # prompt = MESSAGE_ANALYSIS_PROMPT.format(
-        # user_id=state["user_id"],
-        # gameweek_number=state["gameweek_data"].get("gameweek", "N/A"),
-        # team_name=state["user_data"].get("team_name", "Unknown"),
-        # total_points=state["user_data"].get("total_points", "N/A"),
-        # overall_rank=state["user_data"].get("overall_rank", "N/A")
-    # )
-    # print("Prompt:\n", prompt)
-    # TODO: Handle loop-back from response validation node
     additional_context = "N/A"
     if state["is_retry"] and not state.get("validation_passed"):
         print("Retrying response due to validation errors...")
@@ -69,6 +60,7 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
 
     print(state["messages"][-1:])
     print("State:", state)
+
     response = await chain.ainvoke({
         "messages": state["messages"],
         "user_id": state["user_id"],
@@ -105,15 +97,6 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
 
 async def message_generation_node(state: WorkflowState) -> Dict:
     # Node to provide structured response for users
-    # prompt = FPL_GAFFER_SYSTEM_PROMPT.format(
-    #     user_id=state["user_id"],
-    #     gameweek_number=state["gameweek_data"].get("gameweek", "N/A"),
-    #     team_name=state["user_data"].get("team_name", "Unknown"),
-    #     total_points=state["user_data"].get("total_points", "N/A"),
-    #     overall_rank=state["user_data"].get("overall_rank", "N/A"),
-    #     tool_results=json.dumps(state.get("tool_results", "Not applicable"), indent=2)
-    # )
-
     # Pass updated prompt to gaffer chain
     chain = get_gaffer_response_chain(FPL_GAFFER_SYSTEM_PROMPT)
     response = await chain.ainvoke({
@@ -139,6 +122,15 @@ async def response_validation_node(state: WorkflowState) -> Dict:
         "overall_rank": state["user_data"].get("overall_rank", "N/A"),
     }
 
+    if state.get("retry_count", 0) >= settings.MAX_RETRIES:
+        print("Max retries reached. Skipping validation.")
+        return {
+            "validation_passed": True,
+            "validation_errors": [],
+            "validation_suggestions": [],
+            "messages": state["response"]
+        }
+
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
     response = await chain.ainvoke({
         "context": state["messages"],
@@ -157,7 +149,6 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "messages": state["response"]
         }
     else:
-        # TODO: Add max retries limit to avoid infinite loop and resource wastage
         return {
             "validation_passed": response.validation_passed,
             "validation_errors": response.errors,
@@ -167,8 +158,10 @@ async def response_validation_node(state: WorkflowState) -> Dict:
 
 def retry_response_node(state: WorkflowState) -> Dict:
     # Node to prepare for response retry
-    # Reset tool calls and results and update retry flag
-    return {"is_retry": True, "tool_results": {}, "tool_calls": []}
-
-# I would select few of the nodes above for use, and merge some eventually.
-# Not all would be standalone nodes.
+    # Increase retry count, reset tool calls and results, and update retry flag
+    return {
+        "is_retry": True,
+        "retry_count": state.get("retry_count", 0) + 1,
+        "tool_results": {},
+        "tool_calls": []
+    }
