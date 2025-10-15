@@ -3,7 +3,7 @@
 > Your AI-powered Fantasy Premier League co-manager that provides data-driven insights, transfer suggestions, and tactical advice.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Latest-green.svg)](https://github.com/langchain-ai/langgraph)
+[![Status](https://img.shields.io/badge/Status-In%20Progress-yellow.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 📖 Overview
@@ -45,25 +45,26 @@ Unlike generic chatbots, FPL Gaffer:
 #### 1. **State Management** (`state.py`)
 ```python
 class WorkflowState(MessagesState):
-    # User Context
+    """State for the FPL Gaffer workflow."""
+
+    # User & gameweek context
     user_id: int
-    gameweek: Dict[str, Any]
-    user_context: Dict[str, Any]  # Team value, budget, rank, etc.
-    
-    # Tool Orchestration
+    user_data: Dict[str, Any]
+    gameweek_data: Dict
+
+    # Tool execution
     tool_calls: List[Dict[str, Any]]
     tool_results: Dict[str, Any]
-    
-    # Response & Validation
+
+    # Response generation
     response: str
+
+    # Validation and control flow
+    is_retry: bool
+    retry_count: int
     validation_passed: bool
     validation_errors: List[str]
     validation_suggestions: List[str]
-    
-    # Retry Logic
-    retry_count: int
-    is_retry: bool
-    max_retries: int = 2
 ```
 
 #### 2. **Intelligent Tool Selection**
