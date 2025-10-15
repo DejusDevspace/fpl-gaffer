@@ -38,7 +38,7 @@ Unlike generic chatbots, FPL Gaffer:
 
 ### Workflow Graph
 
-![Workflow Graph](./img/gaffer-flow.png)
+<img src="./img/gaffer-flow.png" alt="Workflow Graph" height="550" width="">
 
 ### Key Components
 
