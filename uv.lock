@@ -55,6 +55,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aiohttp-retry"
+version = "2.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9d/61/ebda4d8e3d8cfa1fd3db0fb428db2dd7461d5742cea35178277ad180b033/aiohttp_retry-2.9.1.tar.gz", hash = "sha256:8eb75e904ed4ee5c2ec242fefe85bf04240f685391c4879d8f541d6028ff01f1", size = 13608, upload-time = "2024-11-06T10:44:54.574Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/99/84ba7273339d0f3dfa57901b846489d2e5c2cd731470167757f1935fffbd/aiohttp_retry-2.9.1-py3-none-any.whl", hash = "sha256:66d2759d1921838256a05a3f80ad7e724936f083e35be5abb5e16eed6be6dc54", size = 9981, upload-time = "2024-11-06T10:44:52.917Z" },
+]
+
+[[package]]
 name = "aiosignal"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -475,7 +487,7 @@ wheels = [
 [[package]]
 name = "fpl-gaffer"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "asyncio" },
     { name = "beautifulsoup4" },
@@ -491,9 +503,11 @@ dependencies = [
     { name = "lxml-html-clean" },
     { name = "newspaper3k" },
     { name = "pydantic" },
+    { name = "pyngrok" },
     { name = "python-dotenv" },
     { name = "selenium" },
     { name = "tavily-python" },
+    { name = "twilio" },
     { name = "undetected-chromedriver" },
     { name = "unstructured" },
 ]
@@ -514,9 +528,11 @@ requires-dist = [
     { name = "lxml-html-clean", specifier = ">=0.4.2" },
     { name = "newspaper3k", specifier = ">=0.2.8" },
     { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pyngrok", specifier = ">=7.4.0" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "selenium", specifier = ">=4.34.2" },
     { name = "tavily-python", specifier = ">=0.7.10" },
+    { name = "twilio", specifier = ">=9.8.4" },
     { name = "undetected-chromedriver", specifier = ">=3.5.5" },
     { name = "unstructured", specifier = ">=0.18.11" },
 ]
@@ -1635,6 +1651,27 @@ wheels = [
 ]
 
 [[package]]
+name = "pyjwt"
+version = "2.10.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/46/bd74733ff231675599650d3e47f361794b22ef3e3770998dda30d3b63726/pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953", size = 87785, upload-time = "2024-11-28T03:43:29.933Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/ad/689f02752eeec26aed679477e80e632ef1b682313be70793d798c1d5fc8f/PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb", size = 22997, upload-time = "2024-11-28T03:43:27.893Z" },
+]
+
+[[package]]
+name = "pyngrok"
+version = "7.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/40/f06cbabac68bf2ff33b499d32373dedc20ebec3da814c26f82281f3c9bec/pyngrok-7.4.0.tar.gz", hash = "sha256:1f786fed8d156b99bffd713096a7ec8c81181f949c8f5c920f6820e92d6b9876", size = 44530, upload-time = "2025-09-23T14:47:42.642Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/60/00c4570b6de596a87bd05cb828eaf507e6b9ce171ad797e90fe5e8ecbd6e/pyngrok-7.4.0-py3-none-any.whl", hash = "sha256:719ee7bda031c7c3c80e7722aa3103961ac58bfae2167881d57fef28f5c8917a", size = 25434, upload-time = "2025-09-23T14:47:41.229Z" },
+]
+
+[[package]]
 name = "pypdf"
 version = "5.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2202,6 +2239,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d1/3c/8b4358e81f2f2cfe71b66a267f023a91db20a817b9425dd964873796980a/trio_websocket-0.12.2.tar.gz", hash = "sha256:22c72c436f3d1e264d0910a3951934798dcc5b00ae56fc4ee079d46c7cf20fae", size = 33549, upload-time = "2025-02-25T05:16:58.947Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/19/eb640a397bba49ba49ef9dbe2e7e5c04202ba045b6ce2ec36e9cadc51e04/trio_websocket-0.12.2-py3-none-any.whl", hash = "sha256:df605665f1db533f4a386c94525870851096a223adcb97f72a07e8b4beba45b6", size = 21221, upload-time = "2025-02-25T05:16:57.545Z" },
+]
+
+[[package]]
+name = "twilio"
+version = "9.8.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "aiohttp-retry" },
+    { name = "pyjwt" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/83/da77326ca7e5097e68e24367afb4cb6be50f263e90d85b8c1050891a0b90/twilio-9.8.4.tar.gz", hash = "sha256:392c8a1d2a938a041d07fc39d05cce30f88b4642d9539035399d7eabab90dd61", size = 942227, upload-time = "2025-10-14T11:59:59.009Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/31/d4e679f297ba5e22a3bdb4ff48c359e753f944a527a43a162405753f6c41/twilio-9.8.4-py2.py3-none-any.whl", hash = "sha256:03a137e2538ed2a6448c8b21c067f97ebabe273d76701744db4b6e5e47755df2", size = 1834704, upload-time = "2025-10-14T11:59:57.008Z" },
 ]
 
 [[package]]

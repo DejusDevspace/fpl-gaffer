@@ -132,11 +132,12 @@ async def response_validation_node(state: WorkflowState) -> Dict:
         }
 
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
+
     response = await chain.ainvoke({
         "context": state["messages"],
         "user_info": json.dumps(user_info, indent=2),
         "generated_response": state["response"],
-        "tool_results": state["tool_results"]
+        "tool_results": state.get("tool_results", "")
     })
 
     print("Validation response:", response)
