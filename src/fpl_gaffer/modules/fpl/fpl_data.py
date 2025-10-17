@@ -1,3 +1,4 @@
+import random
 from typing import List, Tuple, Dict, Literal
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
@@ -107,7 +108,7 @@ class FPLDataManager:
 
         # TODO: Sort matched players by stat (points, etc), and return top x players.
 
-        return matched_players[:5]
+        return random.sample(matched_players, 6)
 
     async def get_player_data(self, player_names: List[str]) -> List[Dict]:
         """Get data for specific player(s) by name."""
