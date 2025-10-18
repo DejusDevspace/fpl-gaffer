@@ -59,7 +59,7 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
     chain = get_tools_chain(MESSAGE_ANALYSIS_PROMPT)
 
     print(state["messages"][-1:])
-    print("State:", state)
+    # print("State:", state)
 
     response = await chain.ainvoke({
         "messages": state["messages"],
@@ -147,7 +147,8 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "validation_passed": response.validation_passed,
             "validation_errors": response.errors,
             "validation_suggestions": response.suggestions,
-            "messages": state["response"]
+            "messages": state["response"],
+            "retry_count": 0
         }
     else:
         return {
