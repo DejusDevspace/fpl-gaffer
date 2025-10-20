@@ -38,15 +38,13 @@ async def whatsapp_webhook(Body: str = Form()) -> Response:
     #     return Response(content="Verification token mismatch", status_code=403)
 
     try:
-        data = Body
-        print("Request:", data)
+        # TODO: Handle text and video for twilio requests
         message = WhatsAppMessage(
             message_type="text",
             from_number=twilio_number,
             message_body=Body,
             message_id=MY_NUMBER,
         )
-
 
         # # Extract message details from payload
         # message = parse_whatsapp_message(data)
