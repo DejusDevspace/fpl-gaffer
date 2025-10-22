@@ -148,7 +148,9 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "validation_errors": response.errors,
             "validation_suggestions": response.suggestions,
             "messages": state["response"],
-            "retry_count": 0
+            "retry_count": 0,
+            "tool_calls": [],
+            "tool_results": {}
         }
     else:
         return {
