@@ -42,11 +42,11 @@ class FPLTeamDataManger:
         return squad_data
 
     async def extract_squad_info(
-            self,
-            team_data: Dict,
-            players: Dict,
-            teams: Dict,
-            positions: Dict
+        self,
+        team_data: Dict,
+        players: Dict,
+        teams: Dict,
+        positions: Dict
     ) -> Dict:
         """Extract detailed squad information."""
         gw_history = team_data.get("entry_history", {})
