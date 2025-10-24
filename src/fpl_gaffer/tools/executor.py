@@ -31,9 +31,16 @@ class AsyncToolExecutor:
                 tasks.append((tool_name, task))
 
         # Execute all tasks concurrently
+        i = 0
         for tool_name, task in tasks:
             try:
                 result = await task
+
+                # TODO: handle overwriting same tool names in results dict
+                if tool_name in result:
+                    tool_name = tool_name + f"_{i}"
+                    i += 1
+
                 results[tool_name] = result
             except Exception as e:
                 raise ToolExecutionError(
