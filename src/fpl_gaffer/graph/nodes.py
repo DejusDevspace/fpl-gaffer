@@ -20,6 +20,7 @@ async def context_injection_node(state: WorkflowState) -> Dict:
     # Node to get user data, current gw data, etc...initial data for state
     # Get user id (if not available)
     # Would use ID from config for now, would replace with db implementation much later
+    # TODO: pass user id into state in api and remove settings variable
     if state.get("user_id", 0) != settings.FPL_MANAGER_ID or state.get("user_data", None) is None:
         # Get user data
         user_id = settings.FPL_MANAGER_ID
@@ -30,7 +31,7 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
         # Get gameweek information
         data_manager = FPLDataManager(api)
-        gw_data = await data_manager.get_gameweek_data()
+        gw_data = await data_manager.get_gameweek_data(include_fixtures=False)
 
         # Update state
         return {

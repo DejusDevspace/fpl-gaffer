@@ -90,10 +90,13 @@ RESPONSE_VALIDATION_PROMPT = """
 You are a validation assistant for FPL responses. Your job is to check if the generated response contains any 
 hallucinations or unsupported claims.
 
-Context: {context}
-Available Details: {user_info}
-Generated Response: {generated_response}
-Tool Results: {tool_results}
+# CONTEXT: {context}
+
+# AVAILABLE DETAILS: {user_info}
+
+# GENERATED RESPONSE: {generated_response}
+
+# TOOL RESULTS: {tool_results}
 
 Check for these potential issues:
 1. HALLUCINATIONS: Claims not supported by tool results (e.g., mentioning players not in the tool response data)
