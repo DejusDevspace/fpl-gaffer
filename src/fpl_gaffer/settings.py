@@ -37,5 +37,21 @@ class Settings(BaseSettings):
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
 
+    # ---------- API SETTINGS ---------- #
+    # FastAPI Settings
+    DEBUG: bool = True
+    LANGFUSE_ENABLED: bool = False
+
+    # Database Settings
+    DATABASE_URL: str
+
+    # Metrics settings
+    MODEL_COST_PER_1K: float = 0.0
+
+    # Supabase settings
+    SUPABASE_URL: str
+    SUPABASE_SERVICE_ROLE_KEY: str
+
+
 settings = Settings()
 
