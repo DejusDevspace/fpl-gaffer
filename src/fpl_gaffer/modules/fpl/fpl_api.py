@@ -29,6 +29,10 @@ class FPLOfficialAPIClient:
         """Get a manager's history data."""
         return await self._get(f"/entry/{manager_id}/history/")
 
+    async def get_transfer_data(self, manager_id: int):
+        """Get a manager's transfer data."""
+        return await self._get(f"/entry/{manager_id}/transfers/")
+
     async def _get(self, endpoint: str) -> Dict:
         """Internal GET requests handler."""
         try:

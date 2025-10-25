@@ -1,16 +1,24 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Any
+
+from typer.models import OptionInfo
+
 from fpl_gaffer.settings import settings
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from httpx import AsyncClient
 from fpl_gaffer.utils import build_mappings, map_player
 
+
 class FPLTeamDataManger:
-    def __init__(self, api: FPLOfficialAPIClient, manager_id: int, gameweek: int):
+    def __init__(self, api: FPLOfficialAPIClient, manager_id: int, gameweek: Optional[int] = None):
         self.base_url = settings.FPL_API_BASE_URL
         self.session = AsyncClient()
         self.api = api
         self.manager_id = manager_id
         self.current_gw = gameweek
+
+    async def _get_bootstrap_data(self):
+        """Get bootstrap data from FPL API."""
+        return await self.api.get_bootstrap_data()
 
     async def extract_team_data(self) -> Dict:
         """Get team data for a particular user."""
@@ -27,6 +35,13 @@ class FPLTeamDataManger:
 
         # Build mappings from bootstrap data
         players, teams, positions = build_mappings(bootstrap_data)
+
+        if self.current_gw is None:
+            # Get current gameweek from bootstrap data
+            current_gw = next((
+                gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")
+            ), None)
+            self.current_gw = current_gw.get("id")
 
         # Get the team data for the current gameweek
         team_data = await self.api.get_gameweek_picks(
@@ -106,3 +121,84 @@ class FPLTeamDataManger:
         return history_data
 
     # TODO: Handle auto subs data for team...
+
+    async def get_transfer_history(self) -> List[Dict[str, Any]]:
+        """Get user transfer history."""
+        # Get bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if bootstrap_data is None:
+            return []
+
+        # Build mappings from bootstrap data
+        players, teams, positions = build_mappings(bootstrap_data)
+
+        transfers = await self.api.get_transfer_data(self.manager_id)
+
+        if transfers is None:
+            return []
+
+        # transfer_history = []
+        # Map player ids to names and teams using mapper
+        for t in transfers:
+            player_in_id = t.get("element_in")
+            player_out_id = t.get("element_out")
+
+            player_in_mapped = map_player(player_in_id, players, teams, positions)
+            player_out_mapped = map_player(player_out_id, players, teams, positions)
+
+            t["element_in_name"] = player_in_mapped["name"]
+            t["element_out_name"] = player_out_mapped["name"]
+
+        return transfers
+
+    async def get_captain_picks(self) -> List[Dict[str, Any]]:
+        """Get user captain picks history"""
+        # Get bootstrap data
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if bootstrap_data is None:
+            return []
+
+        # Build mappings from bootstrap data
+        players, teams, positions = build_mappings(bootstrap_data)
+
+        if self.current_gw is None:
+            # Get current gameweek from bootstrap data
+            current_gw = next((
+                gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")
+            ), None)
+            self.current_gw = current_gw.get("id")
+        # print(current_gw)
+
+        captain_picks = []
+        # Get the team data for the gameweeks till present
+        for gw in range(1, self.current_gw + 1):
+            team_data = await self.api.get_gameweek_picks(self.manager_id, gw)
+            # Get picks from team data
+            picks = team_data.get("picks", [])
+
+            # Extract player data from picks
+            for pick in picks:
+                player_info = map_player(pick["element"], players, teams, positions)
+
+                # Get captain and vice captain
+                if pick["is_captain"]:
+                    player_data = {
+                        "gameweek": gw,
+                        "player_id": player_info.get("id"),
+                        "player_name": player_info.get("name"),
+                        "is_vice_captain": False
+                    }
+                    captain_picks.append(player_data)
+
+                if pick['is_vice_captain']:
+                    player_data = {
+                        "gameweek": gw,
+                        "player_id": player_info.get("id"),
+                        "player_name": player_info.get("name"),
+                        "is_vice_captain": True
+                    }
+                    captain_picks.append(player_data)
+
+        return captain_picks

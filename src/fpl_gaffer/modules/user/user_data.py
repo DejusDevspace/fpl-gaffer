@@ -1,3 +1,4 @@
+from typing import Literal
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.settings import settings
 from httpx import AsyncClient
@@ -11,7 +12,7 @@ class FPLUserProfileManager:
         self.api = api
         self.manager_id = manager_id
 
-    async def extract_user_data(self) -> Dict:
+    async def extract_user_data(self, mode: Literal["agent", "api"] = "agent") -> Dict:
         """Get user data from the FPL API."""
         # Get manager data
         manager_data = await self.api.get_manager_data(self.manager_id)
@@ -19,10 +20,12 @@ class FPLUserProfileManager:
         if manager_data is None:
             return {}
 
-        # Build user profile
-        user_profile = self.build_user_profile(manager_data)
+        if mode == "agent":
+            # Build user profile for agent use
+            user_profile = self.build_user_profile(manager_data)
+            return user_profile
 
-        return user_profile
+        return manager_data
 
     def build_user_profile(self, manager_data: Dict) -> Dict:
         """Build a user profile from extracted manager data."""
