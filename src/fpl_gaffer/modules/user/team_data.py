@@ -1,7 +1,4 @@
 from typing import Dict, Optional, List, Any
-
-from typer.models import OptionInfo
-
 from fpl_gaffer.settings import settings
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from httpx import AsyncClient
