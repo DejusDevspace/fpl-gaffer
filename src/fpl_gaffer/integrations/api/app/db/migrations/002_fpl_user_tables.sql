@@ -155,3 +155,21 @@ CREATE TRIGGER update_fpl_teams_updated_at
     BEFORE UPDATE ON public.fpl_teams
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+ -- Function to auto-create user record when someone signs up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, created_at, updated_at)
+  VALUES (NEW.id, NEW.email, NOW(), NOW())
+  ON CONFLICT (id) DO NOTHING;  -- Prevent duplicates
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger that fires when new user signs up
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
