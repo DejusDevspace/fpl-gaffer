@@ -25,6 +25,7 @@ class FPLService:
         Returns:
             fpl_team_id if successful, None otherwise
         """
+        current_time = str(datetime.now(dt.timezone.utc))
         try:
             # TODO: Expand to add other info
             data = {
@@ -42,7 +43,7 @@ class FPLService:
                 "total_transfers": team_data.get("last_deadline_total_transfers", 0),
                 "team_value": team_data.get("last_deadline_value"),
                 "bank": team_data.get("last_deadline_bank"),
-                "last_synced_at": datetime.now(dt.timezone.utc),
+                "last_synced_at": current_time,
             }
 
             result = self.client.table("fpl_teams").upsert(data, on_conflict="fpl_id").execute()
