@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
+from typing import Dict
 from fpl_gaffer.integrations.api.app.middleware.auth import require_auth
 from fpl_gaffer.integrations.api.app.utils.schemas import (
     LinkFPLRequest, SyncFPLRequest, DashboardResponse
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 @router.post("/link-fpl")
 async def link_fpl_team(
     request: LinkFPLRequest,
-    current_user: dict = Depends(require_auth),
+    current_user: Dict = Depends(require_auth),
 ):
     """
     Link user's FPL team to their account.
@@ -51,7 +52,7 @@ async def link_fpl_team(
 @router.post("/sync-fpl")
 async def sync_fpl_data(
     request: SyncFPLRequest,
-    current_user: dict = Depends(require_auth),
+    current_user: Dict = Depends(require_auth),
 ):
     """
     Sync all FPL data for user's team.
@@ -118,7 +119,7 @@ async def sync_fpl_data(
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_dashboard(
-    current_user: dict = Depends(require_auth),
+    current_user: Dict = Depends(require_auth),
 ):
     """Get all dashboard data for authenticated user."""
     user_id = current_user["sub"]
@@ -134,10 +135,12 @@ async def get_dashboard(
     return DashboardResponse(**dashboard_data)
 
 # TODO: Create leagues endpoint for listing leagues and league analytics.
+# @router.get("/leagues")
+# async def get_leagues()
 
 @router.get("/fpl-team")
 async def get_fpl_team(
-    current_user: dict = Depends(require_auth),
+    current_user: Dict = Depends(require_auth),
 ):
     """Get user's linked FPL team info."""
     user_id = current_user["sub"]
@@ -152,7 +155,7 @@ async def get_fpl_team(
 
 @router.delete("/unlink-fpl")
 async def unlink_fpl_team(
-    current_user: dict = Depends(require_auth),
+    current_user: Dict = Depends(require_auth),
 ):
     """Unlink user's FPL team (deletes all FPL data)."""
     user_id = current_user["sub"]
