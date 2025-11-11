@@ -199,3 +199,22 @@ class FPLTeamDataManger:
                     captain_picks.append(player_data)
 
         return captain_picks
+
+    async def get_user_leagues(self) -> Dict:
+        """Get user's leagues data."""
+        manager_data = await self.api.get_manager_data(self.manager_id)
+        leagues_data = manager_data.get("leagues")
+
+        if leagues_data is None:
+            return {}
+
+        return leagues_data
+
+    async def get_league_standings(self, league_id: int, page: int = 1) -> Dict:
+        """Get the standings for a league."""
+        league_standings = await self.api.get_classic_league_standings(league_id, page)
+
+        if league_standings is None:
+            return {}
+
+        return league_standings

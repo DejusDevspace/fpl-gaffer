@@ -1,5 +1,5 @@
 from httpx import AsyncClient
-from typing import Dict
+from typing import Dict, Optional
 from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import FPLAPIError
 
@@ -33,10 +33,15 @@ class FPLOfficialAPIClient:
         """Get a manager's transfer data."""
         return await self._get(f"/entry/{manager_id}/transfers/")
 
-    async def _get(self, endpoint: str) -> Dict:
+    async def get_classic_league_standings(self, league_id: int, page: int = 1):
+        """Get the standings for a league."""
+        params = {"page_standings": page}
+        return await self._get(f"/leagues-classic/{league_id}/standings/", params=params)
+
+    async def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
         """Internal GET requests handler."""
         try:
-            response = await self.session.get(f"{self.base_url}{endpoint}")
+            response = await self.session.get(f"{self.base_url}{endpoint}", params=params)
             response.raise_for_status()
             return response.json()
         except Exception as e:

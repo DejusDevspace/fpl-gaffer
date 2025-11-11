@@ -247,4 +247,87 @@ class FPLService:
             logger.error(f"Error getting dashboard data: {str(e)}")
             return None
 
+    async def sync_user_leagues(self, fpl_team_id: str, leagues_data: Dict[str, Any]) -> bool:
+        """
+        Sync user's leagues data.
+
+        Args:
+            fpl_team_id: FPL team UUID
+            leagues_data: Leagues data from FPL API client
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            records = []
+
+            # Process classic leagues
+            for league in leagues_data.get("classic", []):
+                records.append({
+                    "fpl_team_id": fpl_team_id,
+                    "league_id": league.get("id"),
+                    "league_name": league.get("name"),
+                    "league_type": "classic",
+                    "created": league.get("created"),
+                    "start_event": league.get("start_event"),
+                    "entry_rank": league.get("entry_rank"),
+                    "entry_last_rank": league.get("entry_last_rank"),
+                })
+
+            # Process h2h leagues
+            for league in leagues_data.get("h2h", []):
+                records.append({
+                    "fpl_team_id": fpl_team_id,
+                    "league_id": league.get("id"),
+                    "league_name": league.get("name"),
+                    "league_type": "h2h",
+                    "created": league.get("created"),
+                    "start_event": league.get("start_event"),
+                    "entry_rank": league.get("entry_rank"),
+                    "entry_last_rank": league.get("entry_last_rank"),
+                })
+
+            # Clear existing and insert new
+            self.client.table("user_leagues").delete().eq("fpl_team_id", fpl_team_id).execute()
+            if records:
+                self.client.table("user_leagues").insert(records).execute()
+
+            logger.info(f"Synced {len(records)} league records for team {fpl_team_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error syncing user leagues: {str(e)}")
+            return False
+
+    async def get_user_leagues(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user's leagues."""
+        try:
+            # Get user's FPL team
+            fpl_team = await self.get_user_fpl_team(user_id)
+
+            if not fpl_team:
+                return None
+
+            fpl_team_id = fpl_team["id"]
+
+            # Get leagues from database
+            result = self.client.table("user_leagues") \
+                .select("*") \
+                .eq("fpl_team_id", fpl_team_id) \
+                .execute()
+
+            # Filter into classic and h2h based on league_type
+            classic_leagues = [league for league in result.data if league.get("league_type") == "classic"]
+            h2h_leagues = [league for league in result.data if league.get("league_type") == "h2h"]
+
+            return {
+                "classic": classic_leagues,
+                "h2h": h2h_leagues,
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting user leagues: {str(e)}")
+            return None
+
+
 fpl_service = FPLService()
