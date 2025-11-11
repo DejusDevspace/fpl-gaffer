@@ -133,6 +133,7 @@ async def get_dashboard(
 
     return DashboardResponse(**dashboard_data)
 
+# TODO: Create leagues endpoint for listing leagues and league analytics.
 
 @router.get("/fpl-team")
 async def get_fpl_team(
