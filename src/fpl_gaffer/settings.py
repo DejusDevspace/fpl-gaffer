@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "FPL Gaffer"
 
     # User data settings
-    FPL_MANAGER_ID: int = 2723529
+    FPL_MANAGER_ID: int
 
 
     # FPL Official API settings
