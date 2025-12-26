@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # User data settings
     FPL_MANAGER_ID: int
 
+    # Messages settings
+    MESSAGES_AFTER_SUMMARY: int = 5
+    MESSAGES_SUMMARY_TRIGGER: int = 15
 
     # FPL Official API settings
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"

@@ -117,7 +117,7 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
 
     # Remove messages from state
     # TODO: Set message to remove after summary var
-    delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-settings.TOTAL_MESSAGES_AFTER_SUMMARY]]
+    delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-settings.MESSAGES_AFTER_SUMMARY]]
     return {"summary": response.content, "messages": delete_messages}
 
 async def message_generation_node(state: WorkflowState) -> Dict:

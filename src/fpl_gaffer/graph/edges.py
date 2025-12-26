@@ -1,6 +1,7 @@
 from typing import Literal, Any
 from fpl_gaffer.graph.state import WorkflowState
 from langgraph.graph import END
+from fpl_gaffer.settings import settings
 
 def tool_decision(
     state: WorkflowState
@@ -16,3 +17,14 @@ def should_retry_or_end(state: WorkflowState) -> str | Any:
     if state.get("validation_passed", None):
         return END
     return "retry_response_node"
+
+def should_summarize_conversation(
+    state: WorkflowState
+) -> Literal["summarize_conversation_node", "__end__"]:
+    # Node to decide whether to summarize the conversation
+    messages = state["messages"]
+
+    if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
+        return "summarize_conversation_node"
+
+    return END
