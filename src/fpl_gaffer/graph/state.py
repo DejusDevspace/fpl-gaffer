@@ -16,6 +16,7 @@ class WorkflowState(MessagesState):
 
     # Response generation
     response: str
+    summary: str
 
     # Validation and control flow
     is_retry: bool

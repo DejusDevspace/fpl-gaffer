@@ -1,5 +1,6 @@
 import json
 from typing import Dict, Literal
+from langchain_core.messages import HumanMessage, RemoveMessage
 from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.modules import (
     FPLOfficialAPIClient, FPLUserProfileManager, FPLDataManager
@@ -10,6 +11,7 @@ from fpl_gaffer.core.prompts import (
 )
 from fpl_gaffer.tools.executor import AsyncToolExecutor
 from fpl_gaffer.utils.chains import get_tools_chain, get_gaffer_response_chain, get_response_validation_chain
+from fpl_gaffer.utils.helpers import get_chat_model
 from fpl_gaffer.settings import settings
 
 
@@ -94,7 +96,29 @@ async def tool_execution_node(state: WorkflowState) -> Dict:
 
 async def summarize_conversation_node(state: WorkflowState) -> Dict:
     # Conditional node to summarize conversation
-    pass
+    model = get_chat_model()
+    summary = state.get("summary", "")
+
+    if summary:
+        summary_message = (
+            f"This is the summary of the conversation to date between Gaffer and the user:{summary}\n\n"
+            "Extend the summary by taking into account the new messages above:"
+        )
+    else:
+        summary_message = (
+            "Create a summary of the conversation above between Gaffer and the user. "
+            "The summary must be a short description of the conversation so far, "
+            "but that captures all the relevant information shared between Gaffer and the user:"
+        )
+
+    # Append the summary to the current messages
+    messages = state["messages"] + [HumanMessage(content=summary_message)]
+    response = await model.ainvoke(messages)
+
+    # Remove messages from state
+    # TODO: Set message to remove after summary var
+    delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-settings.TOTAL_MESSAGES_AFTER_SUMMARY]]
+    return {"summary": response.content, "messages": delete_messages}
 
 async def message_generation_node(state: WorkflowState) -> Dict:
     # Node to provide structured response for users
