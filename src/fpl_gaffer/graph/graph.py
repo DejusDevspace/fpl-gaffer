@@ -3,7 +3,8 @@ from langgraph.graph import StateGraph
 from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.graph.nodes import (
     context_injection_node, message_analysis_node, tool_execution_node,
-    message_generation_node, response_validation_node, retry_response_node
+    message_generation_node, response_validation_node, retry_response_node,
+    summarize_conversation_node
 )
 from fpl_gaffer.graph.edges import tool_decision, should_retry_or_end
 
@@ -19,6 +20,7 @@ def create_workflow_graph():
     graph_builder.add_node("message_generation_node", message_generation_node)
     graph_builder.add_node("response_validation_node", response_validation_node)
     graph_builder.add_node("retry_response_node", retry_response_node)
+    graph_builder.add_node("summarize_conversation_node", summarize_conversation_node)
 
     # Define the workflow
     # Set the graph entry point
@@ -28,6 +30,7 @@ def create_workflow_graph():
 
     graph_builder.add_conditional_edges("message_analysis_node", tool_decision)
 
+    # TODO: Add edge from validation node to conditional summarization node and then to end
     graph_builder.add_edge("tool_execution_node", "message_generation_node")
     graph_builder.add_edge("message_generation_node", "response_validation_node")
     graph_builder.add_conditional_edges("response_validation_node", should_retry_or_end)
