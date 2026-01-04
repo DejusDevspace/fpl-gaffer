@@ -17,7 +17,7 @@ def tool_decision(
 def should_retry_or_end(state: WorkflowState) -> str | Any:
     # Node to decide whether to retry response generation based on validation results
     if state.get("validation_passed", None):
-        return END
+        return "summarize_conversation_node"
     return "retry_response_node"
 
 def should_summarize_conversation(
