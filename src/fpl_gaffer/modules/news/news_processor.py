@@ -1,5 +1,5 @@
 from typing import List, Dict
-from langchain.schema import Document
+from langchain_core.documents import Document
 from fpl_gaffer.settings import settings
 
 
