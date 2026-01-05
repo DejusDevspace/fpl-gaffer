@@ -3,7 +3,7 @@ from tavily.async_tavily import AsyncTavilyClient
 from fpl_gaffer.settings import settings
 from fpl_gaffer.core.exceptions import NewsSearchError
 from typing import Optional, List, Dict
-from langchain.schema import Document
+from langchain_core.documents import Document
 from dotenv import load_dotenv
 
 #  Load environment variables
