@@ -2,7 +2,7 @@ import inspect
 import asyncio
 from typing import List, Callable, Dict, Any, Optional
 from pydantic import BaseModel, ConfigDict
-from langchain.tools import Tool, BaseTool
+from langchain.tools import BaseTool
 from fpl_gaffer.core.exceptions import ToolExecutionError
 from fpl_gaffer.tools.news import news_search_tool, NewsSearchInput
 from fpl_gaffer.tools.user import get_user_team_info_tool, UserTeamInfoInput
