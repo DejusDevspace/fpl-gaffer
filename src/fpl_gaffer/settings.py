@@ -13,11 +13,11 @@ class Settings(BaseSettings):
     APP_NAME: str = "FPL Gaffer"
 
     # User data settings
-    FPL_MANAGER_ID: int
+    FPL_MANAGER_ID: int =  2723529
 
     # Messages settings
-    MESSAGES_AFTER_SUMMARY: int = 5
-    MESSAGES_SUMMARY_TRIGGER: int = 15
+    MESSAGES_AFTER_SUMMARY: int = 2
+    MESSAGES_SUMMARY_TRIGGER: int = 4
 
     # FPL Official API settings
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"

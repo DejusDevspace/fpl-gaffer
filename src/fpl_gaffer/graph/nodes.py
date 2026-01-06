@@ -116,7 +116,6 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
     response = await model.ainvoke(messages)
 
     # Remove messages from state
-    # TODO: Set message to remove after summary var
     delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-settings.MESSAGES_AFTER_SUMMARY]]
     return {"summary": response.content, "messages": delete_messages}
 

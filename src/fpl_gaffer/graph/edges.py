@@ -14,19 +14,25 @@ def tool_decision(
 
 # TODO: Look into merging the retry and summarize nodes.
 # The logic would be: should_retry_or_summarize...
-def should_retry_or_end(state: WorkflowState) -> str | Any:
+def should_retry_or_summarize(state: WorkflowState) -> str | Any:
     # Node to decide whether to retry response generation based on validation results
+    # or to summarize the conversation based on number of messages
     if state.get("validation_passed", None):
-        return "summarize_conversation_node"
+        messages = state["messages"]
+
+        if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
+            return "summarize_conversation_node"
+
+        return END
     return "retry_response_node"
 
-def should_summarize_conversation(
-    state: WorkflowState
-) -> Literal["summarize_conversation_node", "__end__"]:
-    # Node to decide whether to summarize the conversation
-    messages = state["messages"]
-
-    if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
-        return "summarize_conversation_node"
-
-    return END
+# def should_summarize_conversation(
+#     state: WorkflowState
+# ) -> Literal["summarize_conversation_node", "__end__"]:
+#     # Node to decide whether to summarize the conversation
+#     messages = state["messages"]
+#
+#     if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
+#         return "summarize_conversation_node"
+#
+#     return END
