@@ -23,6 +23,7 @@ dependencies = [
     "langchain-groq>=0.3.7",
     "langgraph>=0.6.4",
     "langgraph-checkpoint-sqlite>=2.0.11",
+    "langgraph-cli[inmem]>=0.4.11",
     "lxml-html-clean>=0.4.2",
     "newspaper3k>=0.2.8",
     "passlib>=1.7.4",
