@@ -12,8 +12,6 @@ def tool_decision(
         return "message_generation_node"
     return "tool_execution_node"
 
-# TODO: Look into merging the retry and summarize nodes.
-# The logic would be: should_retry_or_summarize...
 def should_retry_or_summarize(state: WorkflowState) -> str | Any:
     # Node to decide whether to retry response generation based on validation results
     # or to summarize the conversation based on number of messages
