@@ -30,7 +30,6 @@ def create_workflow_graph():
 
     graph_builder.add_conditional_edges("message_analysis_node", tool_decision)
 
-    # TODO: Add edge from validation node to conditional summarization node and then to end
     graph_builder.add_edge("tool_execution_node", "message_generation_node")
     graph_builder.add_edge("message_generation_node", "response_validation_node")
     graph_builder.add_conditional_edges("response_validation_node", should_retry_or_summarize)
