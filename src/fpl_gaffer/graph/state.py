@@ -6,7 +6,7 @@ class WorkflowState(MessagesState):
     """State for the FPL Gaffer workflow."""
 
     # User & gameweek context
-    user_id: int
+    user_id: str
     user_data: Dict[str, Any]
     gameweek_data: Dict
 
@@ -25,3 +25,8 @@ class WorkflowState(MessagesState):
     validation_errors: List[str]
     validation_suggestions: List[str]
 
+    # Metrics tracking
+    tokens_in: int
+    tokens_out: int
+    latency_ms: float
+    model: str

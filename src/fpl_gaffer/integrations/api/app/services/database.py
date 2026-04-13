@@ -227,5 +227,21 @@ class DatabaseService:
             logger.error(f"Error getting users: {str(e)}")
             return []
 
+    async def get_fpl_id_by_user_id(self, user_id: str) -> Optional[str]:
+        """Resolve internal user_id to FPL manager_id."""
+        try:
+            response = self.client.table("fpl_teams") \
+                .select("fpl_id") \
+                .eq("user_id", user_id) \
+                .single() \
+                .execute()
+
+            if response.data:
+                return response.data.get("fpl_id")
+            return None
+        except Exception as e:
+            logger.error(f"Error resolving FPL ID for user {user_id}: {str(e)}")
+            return None
+
 
 database_service = DatabaseService()
