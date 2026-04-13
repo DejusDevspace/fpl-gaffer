@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fpl_gaffer.settings import settings
 from contextlib import asynccontextmanager
 from fpl_gaffer.integrations.api.app.routes.user import router as user_router
+from fpl_gaffer.integrations.api.app.routes.chat import router as chat_router
+from fpl_gaffer.integrations.api.app.routes.metrics import router as metrics_router
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -49,3 +51,5 @@ def home():
 
 # Routers
 app.include_router(user_router)
+app.include_router(chat_router)
+app.include_router(metrics_router)
