@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 import datetime as dt
 from datetime import datetime, timedelta
-from fpl_gaffer.integrations.api.app.db import get_db
+# from fpl_gaffer.integrations.api.app.db import get_db
 from fpl_gaffer.integrations.api.app.services.database import database_service
 from pydantic import BaseModel
 from typing import List, Optional

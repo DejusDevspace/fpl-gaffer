@@ -1,7 +1,7 @@
 import time
 import tiktoken
 from typing import Optional, Dict, Any
-from langfuse import Client
+from langfuse import get_client
 
 from fpl_gaffer.settings import settings
 from fpl_gaffer.integrations.api.app.utils.logger import logger
@@ -20,7 +20,7 @@ class AgentWrapper:
         if settings.LANGFUSE_ENABLED:
             try:
 
-                self.langfuse_client = Client(api_key=settings.langfuse_api_key)
+                self.langfuse_client = get_client(public_key=settings.LANGFUSE_API_KEY)
                 logger.info("LangFuse client initialized")
             except ImportError:
                 logger.warning("LangFuse SDK not available; using DB logging fallback")
@@ -63,7 +63,7 @@ class AgentWrapper:
             # Extract Metrics from state
             tokens_in = final_state.get("tokens_in", 0)
             tokens_out = final_state.get("tokens_out", 0)
-            model = final_state.get("model", settings.groq_model)
+            model = final_state.get("model", settings.GROQ_MODEL_NAME)
 
             # Fallback token estimation if graph didn't populate them
             if tokens_in == 0 and self.token_encoder:
@@ -123,7 +123,7 @@ class AgentWrapper:
                 "tokens_out": 0,
                 "latency_ms": latency_ms,
                 "cost_usd": 0.0,
-                "model": settings.groq_model,
+                "model": settings.GROQ_MODEL_NAME,
                 "status": "error",
                 "error": str(e),
             }
