@@ -21,6 +21,7 @@ dependencies = [
     "langchain-community>=0.3.27",
     "langchain-core>=0.3.72",
     "langchain-groq>=0.3.7",
+    "langfuse>=4.2.0",
     "langgraph>=0.6.4",
     "langgraph-checkpoint-sqlite>=2.0.11",
     "langgraph-cli[inmem]>=0.4.11",
