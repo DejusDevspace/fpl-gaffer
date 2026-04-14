@@ -43,7 +43,10 @@ class Settings(BaseSettings):
     # ---------- API SETTINGS ---------- #
     # FastAPI Settings
     DEBUG: bool = True
+
+    # LangFuse Settings
     LANGFUSE_ENABLED: bool = False
+    LANGFUSE_API_KEY: str | None
 
     # Database Settings
     DATABASE_URL: str

@@ -20,15 +20,17 @@ from fpl_gaffer.settings import settings
 # etc...would also consider edges for tool calling or other conditional flows.
 async def context_injection_node(state: WorkflowState) -> Dict:
     # Node to get user data, current gw data, etc...initial data for state
-    # Get user id (if not available)
-    # Would use ID from config for now, would replace with db implementation much later
-    # TODO: pass user id into state in api and remove settings variable
-    if state.get("user_id", 0) != settings.FPL_MANAGER_ID or state.get("user_data", None) is None:
-        # Get user data
-        user_id = settings.FPL_MANAGER_ID
+    # Use fpl_id from state if available, otherwise fallback to settings for legacy/dev
+    fpl_id = state.get("user_id")
+
+    if not fpl_id or state.get("user_data", None) is None:
+        # Fallback to settings if no user_id provided (e.g. local dev)
+        if not fpl_id:
+            fpl_id = settings.FPL_MANAGER_ID
+
         api = FPLOfficialAPIClient()
 
-        profile_manager = FPLUserProfileManager(api, user_id)
+        profile_manager = FPLUserProfileManager(api, fpl_id)
         user_data = await profile_manager.extract_user_data()
 
         # Get gameweek information
@@ -37,7 +39,7 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
         # Update state
         return {
-            "user_id": user_id,
+            "user_id": fpl_id,
             "user_data": user_data,
             "gameweek_data": gw_data,
             "is_retry": False
