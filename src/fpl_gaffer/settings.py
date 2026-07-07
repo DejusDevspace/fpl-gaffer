@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_SERVICE_ROLE_KEY: str
 
+    # WhatsApp/Twilio settings
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_NUMBER: str = ""
+    WHATSAPP_VERIFY_TOKEN: str = ""
+
 
 settings = Settings()
-
