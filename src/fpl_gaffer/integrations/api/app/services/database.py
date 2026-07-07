@@ -243,5 +243,30 @@ class DatabaseService:
             logger.error(f"Error resolving FPL ID for user {user_id}: {str(e)}")
             return None
 
+    async def get_user_with_fpl_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        """Resolve a WhatsApp phone number to a user and linked FPL ID."""
+        try:
+            user_response = self.client.table("users") \
+                .select("id, phone, email") \
+                .eq("phone", phone) \
+                .limit(1) \
+                .execute()
+
+            if not user_response.data:
+                return None
+
+            user = user_response.data[0]
+            fpl_id = await self.get_fpl_id_by_user_id(user["id"])
+
+            return {
+                "user_id": user["id"],
+                "phone": user.get("phone"),
+                "email": user.get("email"),
+                "fpl_id": fpl_id,
+            }
+        except Exception as e:
+            logger.error(f"Error resolving user by phone {phone}: {str(e)}")
+            return None
+
 
 database_service = DatabaseService()

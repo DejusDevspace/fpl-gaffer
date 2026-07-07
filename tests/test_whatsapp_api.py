@@ -5,8 +5,13 @@ from fpl_gaffer.integrations.api.app.routes.whatsapp import (
     whatsapp_webhook,
     whatsapp_webhook_health,
 )
-from fpl_gaffer.integrations.api.app.services.whatsapp import WhatsAppService
+from fpl_gaffer.integrations.api.app.services.whatsapp import (
+    DEFAULT_LINK_FPL_RESPONSE,
+    DEFAULT_REGISTRATION_RESPONSE,
+    WhatsAppService,
+)
 from fpl_gaffer.integrations.api.main import app
+from fpl_gaffer.integrations.whatsapp.schema import WhatsAppMessage
 
 
 class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
@@ -52,6 +57,88 @@ class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(message.from_number, "+2347012345678")
         self.assertEqual(message.message_id, "SM123")
         send_message.assert_awaited_once_with("+2347012345678", "Captain Saka looks solid.")
+
+    async def test_unregistered_sender_gets_registration_prompt(self):
+        service = WhatsAppService()
+        message = WhatsAppMessage(
+            message_type="text",
+            from_number="+2347012345678",
+            message_body="Rate my team",
+            message_id="SM123",
+        )
+
+        with (
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.database_service.get_user_with_fpl_by_phone",
+                new_callable=AsyncMock,
+                return_value=None,
+            ) as lookup,
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.agent_wrapper.call_agent",
+                new_callable=AsyncMock,
+            ) as call_agent,
+        ):
+            response = await service.process_message(message)
+
+        self.assertEqual(response, DEFAULT_REGISTRATION_RESPONSE)
+        lookup.assert_awaited_once_with("+2347012345678")
+        call_agent.assert_not_awaited()
+
+    async def test_registered_sender_without_fpl_id_gets_link_prompt(self):
+        service = WhatsAppService()
+        message = WhatsAppMessage(
+            message_type="text",
+            from_number="+2347012345678",
+            message_body="Rate my team",
+            message_id="SM123",
+        )
+
+        with (
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.database_service.get_user_with_fpl_by_phone",
+                new_callable=AsyncMock,
+                return_value={"user_id": "user-1", "phone": "+2347012345678", "fpl_id": None},
+            ),
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.agent_wrapper.call_agent",
+                new_callable=AsyncMock,
+            ) as call_agent,
+        ):
+            response = await service.process_message(message)
+
+        self.assertEqual(response, DEFAULT_LINK_FPL_RESPONSE)
+        call_agent.assert_not_awaited()
+
+    async def test_registered_sender_with_fpl_id_invokes_agent(self):
+        service = WhatsAppService()
+        message = WhatsAppMessage(
+            message_type="text",
+            from_number="+2347012345678",
+            message_body="Rate my team",
+            message_id="SM123",
+        )
+
+        with (
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.database_service.get_user_with_fpl_by_phone",
+                new_callable=AsyncMock,
+                return_value={"user_id": "user-1", "phone": "+2347012345678", "fpl_id": 12345},
+            ),
+            patch(
+                "fpl_gaffer.integrations.api.app.services.whatsapp.agent_wrapper.call_agent",
+                new_callable=AsyncMock,
+                return_value={"status": "ok", "text": "Your team looks strong."},
+            ) as call_agent,
+        ):
+            response = await service.process_message(message)
+
+        self.assertEqual(response, "Your team looks strong.")
+        call_agent.assert_awaited_once()
+        kwargs = call_agent.call_args.kwargs
+        self.assertEqual(kwargs["prompt"], "Rate my team")
+        self.assertEqual(kwargs["user_id"], "user-1")
+        self.assertEqual(kwargs["fpl_id"], 12345)
+        self.assertEqual(kwargs["session_id"], "whatsapp:+2347012345678")
 
 
 if __name__ == "__main__":

@@ -64,5 +64,8 @@ class Settings(BaseSettings):
     TWILIO_NUMBER: str = ""
     WHATSAPP_VERIFY_TOKEN: str = ""
 
+    # Onboarding settings
+    ONBOARDING_URL: str = ""
+
 
 settings = Settings()
