@@ -15,7 +15,6 @@ from fpl_gaffer.tools.fpl import (
 class AsyncFPLTool(BaseTool):
     """Custom async tool wrapper to handle async execution in LangGraph context."""
     func: Callable
-    input_schema: BaseModel = None
 
     # Allow custom types
     model_config = ConfigDict(arbitrary_types_allowed=True)

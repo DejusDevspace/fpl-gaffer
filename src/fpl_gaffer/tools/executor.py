@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Any, List, Optional
 from fpl_gaffer.tools.loader import TOOLS, AsyncFPLTool
 from fpl_gaffer.core.exceptions import ToolExecutionError
@@ -30,22 +31,23 @@ class AsyncToolExecutor:
                 task = self.execute_tool(tool_name, **tool_args)
                 tasks.append((tool_name, task))
 
-        # Execute all tasks concurrently
-        i = 0
-        for tool_name, task in tasks:
-            try:
-                result = await task
+        tool_names = [tool_name for tool_name, _ in tasks]
+        tool_results = await asyncio.gather(
+            *(task for _, task in tasks),
+            return_exceptions=True
+        )
 
-                # TODO: handle overwriting same tool names in results dict
-                if tool_name in result:
-                    tool_name = tool_name + f"_{i}"
-                    i += 1
-
-                results[tool_name] = result
-            except Exception as e:
+        for index, (tool_name, result) in enumerate(zip(tool_names, tool_results)):
+            if isinstance(result, Exception):
                 raise ToolExecutionError(
-                    f"Error executing tool '{tool_name}': {e}"
-                ) from e
+                    f"Error executing tool '{tool_name}': {result}"
+                ) from result
+
+            result_key = tool_name
+            if result_key in results:
+                result_key = f"{tool_name}_{index}"
+
+            results[result_key] = result
 
         return results
 

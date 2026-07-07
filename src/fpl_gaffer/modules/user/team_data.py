@@ -65,6 +65,8 @@ class FPLTeamDataManger:
 
         # Squad information
         squad_info = {
+            "manager_id": self.manager_id,
+            "gameweek": self.current_gw,
             "starting_xi": [],
             "bench": [],
             "captain": None,
@@ -77,7 +79,6 @@ class FPLTeamDataManger:
             "transfers": gw_history.get("event_transfers", 0),
             "transfers_cost": gw_history.get("event_transfers_cost", 0),
             "money_itb": gw_history.get("bank", 0) / 10,
-            "history": history_data if (history_data := await self.get_user_history()) else {}
         }
 
         # Get manager picks from team data
