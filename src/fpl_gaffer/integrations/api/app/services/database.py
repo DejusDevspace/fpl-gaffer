@@ -69,6 +69,29 @@ class DatabaseService:
             logger.error(f"Error creating tool usage: {str(e)}")
             return False
 
+    async def upsert_user_by_phone(
+        self,
+        full_name: str,
+        phone: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Create or update an onboarding user by phone number."""
+        try:
+            data = {
+                "full_name": full_name,
+                "phone": phone,
+            }
+
+            result = self.client.table("users") \
+                .upsert(data, on_conflict="phone") \
+                .execute()
+
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error upserting user by phone {phone}: {str(e)}")
+            return None
+
     async def get_metrics_summary(
         self,
         start_date: datetime,

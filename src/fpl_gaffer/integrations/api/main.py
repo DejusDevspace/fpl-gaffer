@@ -7,6 +7,7 @@ from fpl_gaffer.integrations.api.app.routes.user import router as user_router
 from fpl_gaffer.integrations.api.app.routes.chat import router as chat_router
 from fpl_gaffer.integrations.api.app.routes.metrics import router as metrics_router
 from fpl_gaffer.integrations.api.app.routes.whatsapp import router as whatsapp_router
+from fpl_gaffer.integrations.api.app.routes.onboarding import router as onboarding_router
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -55,3 +56,4 @@ app.include_router(user_router)
 app.include_router(chat_router)
 app.include_router(metrics_router)
 app.include_router(whatsapp_router)
+app.include_router(onboarding_router)

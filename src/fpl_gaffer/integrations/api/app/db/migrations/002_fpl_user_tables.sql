@@ -1,7 +1,7 @@
 -- FPL Teams table (links Supabase user to FPL team)
 CREATE TABLE IF NOT EXISTS public.fpl_teams (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
     fpl_id INTEGER UNIQUE NOT NULL,
     team_name TEXT,
     player_first_name TEXT,
@@ -160,8 +160,8 @@ CREATE TRIGGER update_fpl_teams_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.users (id, email, created_at, updated_at)
-    VALUES (NEW.id, NEW.email, NOW(), NOW())
+    INSERT INTO public.users (id, full_name, email, created_at, updated_at)
+    VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', NEW.email, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;  -- Prevent duplicates
     RETURN NEW;
 END;
