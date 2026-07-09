@@ -5,6 +5,7 @@ from twilio.rest import Client
 from fpl_gaffer.integrations.api.app.services.agent_wrapper import agent_wrapper
 from fpl_gaffer.integrations.api.app.services.database import database_service
 from fpl_gaffer.integrations.api.app.utils.logger import logger
+from fpl_gaffer.integrations.api.app.utils.phone import normalize_phone_number
 from fpl_gaffer.integrations.whatsapp.schema import WhatsAppMessage
 from fpl_gaffer.settings import settings
 
@@ -37,9 +38,7 @@ class WhatsAppService:
     @staticmethod
     def normalize_number(number: Optional[str]) -> str:
         """Normalize Twilio WhatsApp numbers into E.164-like phone strings."""
-        if not number:
-            return ""
-        return number.removeprefix("whatsapp:").strip()
+        return normalize_phone_number(number)
 
     def build_message(
         self,
