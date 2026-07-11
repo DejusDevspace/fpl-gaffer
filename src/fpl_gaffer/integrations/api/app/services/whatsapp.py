@@ -30,7 +30,7 @@ class WhatsAppService:
         self._twilio_client: Optional[Client] = None
 
     @property
-    def twilio_client(self) -> Client:
+    def twilio_client(self) -> Client | None:
         if self._twilio_client is None:
             self._twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         return self._twilio_client
