@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_NUMBER: str = ""
+    TWILIO_VERIFY_SERVICE_SID: str = ""
+    TWILIO_VERIFY_CHANNEL: str = "whatsapp"
     WHATSAPP_VERIFY_TOKEN: str = ""
 
     # Onboarding settings

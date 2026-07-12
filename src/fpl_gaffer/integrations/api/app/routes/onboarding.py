@@ -2,16 +2,36 @@ from fastapi import APIRouter, HTTPException
 
 from fpl_gaffer.integrations.api.app.services.database import database_service
 from fpl_gaffer.integrations.api.app.services.fpl import fpl_service
+from fpl_gaffer.integrations.api.app.services.whatsapp import whatsapp_service
 from fpl_gaffer.integrations.api.app.utils.phone import normalize_phone_number
 from fpl_gaffer.integrations.api.app.utils.schemas import (
     OnboardingRequest,
     OnboardingResponse,
+    PhoneVerificationRequest,
+    PhoneVerificationResponse,
 )
 from fpl_gaffer.modules.fpl import FPLOfficialAPIClient
 from fpl_gaffer.modules.user import FPLUserProfileManager
 
 
 router = APIRouter(prefix="/api/onboarding", tags=["onboarding"])
+
+
+@router.post("/request-code", response_model=PhoneVerificationResponse)
+async def request_phone_verification(
+    request: PhoneVerificationRequest,
+) -> PhoneVerificationResponse:
+    """Send a verification code before allowing phone-linked onboarding."""
+    phone = normalize_phone_number(request.phone)
+
+    if not phone:
+        raise HTTPException(status_code=422, detail="Phone number is required")
+
+    sent = await whatsapp_service.start_phone_verification(phone)
+    if not sent:
+        raise HTTPException(status_code=503, detail="Failed to start phone verification")
+
+    return PhoneVerificationResponse(status="sent", phone=phone)
 
 
 @router.post("/register", response_model=OnboardingResponse)
@@ -25,6 +45,13 @@ async def register_user(request: OnboardingRequest) -> OnboardingResponse:
 
     if not phone:
         raise HTTPException(status_code=422, detail="Phone number is required")
+
+    phone_verified = await whatsapp_service.check_phone_verification(
+        phone=phone,
+        code=request.verification_code,
+    )
+    if not phone_verified:
+        raise HTTPException(status_code=403, detail="Phone verification required")
 
     try:
         async with FPLOfficialAPIClient() as api:

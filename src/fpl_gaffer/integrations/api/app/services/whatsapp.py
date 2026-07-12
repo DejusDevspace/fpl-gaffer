@@ -1,5 +1,6 @@
 from typing import Optional
 
+from twilio.request_validator import RequestValidator
 from twilio.rest import Client
 
 from fpl_gaffer.integrations.api.app.services.agent_wrapper import agent_wrapper
@@ -34,6 +35,55 @@ class WhatsAppService:
         if self._twilio_client is None:
             self._twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         return self._twilio_client
+
+    def validate_webhook_signature(
+        self,
+        url: str,
+        form_data: dict[str, str],
+        signature: Optional[str],
+    ) -> bool:
+        """Validate that an inbound webhook was signed by Twilio."""
+        if not settings.TWILIO_AUTH_TOKEN or not signature:
+            return False
+
+        validator = RequestValidator(settings.TWILIO_AUTH_TOKEN)
+        return validator.validate(url, form_data, signature)
+
+    async def start_phone_verification(self, phone: str) -> bool:
+        """Send a Twilio Verify code to prove phone ownership."""
+        if not settings.TWILIO_VERIFY_SERVICE_SID:
+            logger.error("TWILIO_VERIFY_SERVICE_SID is not configured")
+            return False
+
+        try:
+            self.twilio_client.verify.v2.services(
+                settings.TWILIO_VERIFY_SERVICE_SID
+            ).verifications.create(
+                to=self.normalize_number(phone),
+                channel=settings.TWILIO_VERIFY_CHANNEL,
+            )
+            return True
+        except Exception as exc:
+            logger.error("Failed to start phone verification: %s", exc)
+            return False
+
+    async def check_phone_verification(self, phone: str, code: str) -> bool:
+        """Check a Twilio Verify code before linking phone-owned resources."""
+        if not settings.TWILIO_VERIFY_SERVICE_SID:
+            logger.error("TWILIO_VERIFY_SERVICE_SID is not configured")
+            return False
+
+        try:
+            check = self.twilio_client.verify.v2.services(
+                settings.TWILIO_VERIFY_SERVICE_SID
+            ).verification_checks.create(
+                to=self.normalize_number(phone),
+                code=code.strip(),
+            )
+            return check.status == "approved"
+        except Exception as exc:
+            logger.error("Failed to check phone verification: %s", exc)
+            return False
 
     @staticmethod
     def normalize_number(number: Optional[str]) -> str:
