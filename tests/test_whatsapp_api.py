@@ -14,6 +14,16 @@ from fpl_gaffer.integrations.api.main import app
 from fpl_gaffer.integrations.whatsapp.schema import WhatsAppMessage
 
 
+class _FakeRequest:
+    def __init__(self, form_data, signature="valid-signature"):
+        self._form_data = form_data
+        self.headers = {"X-Twilio-Signature": signature}
+        self.url = "https://api.example.com/api/webhooks/whatsapp"
+
+    async def form(self):
+        return self._form_data
+
+
 class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
     def test_normalize_number_removes_twilio_prefix(self):
         self.assertEqual(
@@ -34,6 +44,10 @@ class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
     async def test_whatsapp_webhook_processes_and_replies_to_sender(self):
         with (
             patch(
+                "fpl_gaffer.integrations.api.app.routes.whatsapp.whatsapp_service.validate_webhook_signature",
+                return_value=True,
+            ) as validate_signature,
+            patch(
                 "fpl_gaffer.integrations.api.app.routes.whatsapp.whatsapp_service.process_message",
                 new_callable=AsyncMock,
                 return_value="Captain Saka looks solid.",
@@ -45,18 +59,52 @@ class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
             ) as send_message,
         ):
             response = await whatsapp_webhook(
-                Body="Who should I captain?",
-                From="whatsapp:+2347012345678",
-                MessageSid="SM123",
-                MessageType="text",
+                _FakeRequest(
+                    {
+                        "Body": "Who should I captain?",
+                        "From": "whatsapp:+2347012345678",
+                        "MessageSid": "SM123",
+                        "MessageType": "text",
+                    }
+                )
             )
 
         self.assertEqual(response.status_code, 200)
+        validate_signature.assert_called_once()
         message = process_message.call_args.args[0]
         self.assertEqual(message.message_body, "Who should I captain?")
         self.assertEqual(message.from_number, "+2347012345678")
         self.assertEqual(message.message_id, "SM123")
         send_message.assert_awaited_once_with("+2347012345678", "Captain Saka looks solid.")
+
+    async def test_whatsapp_webhook_rejects_invalid_signature(self):
+        with (
+            patch(
+                "fpl_gaffer.integrations.api.app.routes.whatsapp.whatsapp_service.validate_webhook_signature",
+                return_value=False,
+            ),
+            patch(
+                "fpl_gaffer.integrations.api.app.routes.whatsapp.whatsapp_service.process_message",
+                new_callable=AsyncMock,
+            ) as process_message,
+            patch(
+                "fpl_gaffer.integrations.api.app.routes.whatsapp.whatsapp_service.send_message",
+                new_callable=AsyncMock,
+            ) as send_message,
+        ):
+            response = await whatsapp_webhook(
+                _FakeRequest(
+                    {
+                        "Body": "Who should I captain?",
+                        "From": "whatsapp:+2347012345678",
+                    },
+                    signature="bad-signature",
+                )
+            )
+
+        self.assertEqual(response.status_code, 403)
+        process_message.assert_not_awaited()
+        send_message.assert_not_awaited()
 
     async def test_unregistered_sender_gets_registration_prompt(self):
         service = WhatsAppService()

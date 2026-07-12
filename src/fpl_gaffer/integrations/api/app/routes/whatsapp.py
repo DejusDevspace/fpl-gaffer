@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
 from fpl_gaffer.integrations.api.app.services.whatsapp import whatsapp_service
@@ -15,19 +15,25 @@ async def whatsapp_webhook_health() -> dict:
 
 
 @router.post("/whatsapp")
-async def whatsapp_webhook(
-    Body: str = Form(default=""),
-    From: str = Form(default=""),
-    MessageSid: str = Form(default=""),
-    MessageType: str = Form(default="text"),
-) -> Response:
+async def whatsapp_webhook(request: Request) -> Response:
     """Handle Twilio WhatsApp webhook events."""
     try:
+        form = await request.form()
+        form_data = {key: str(value) for key, value in form.items()}
+        signature = request.headers.get("X-Twilio-Signature")
+
+        if not whatsapp_service.validate_webhook_signature(
+            url=str(request.url),
+            form_data=form_data,
+            signature=signature,
+        ):
+            return Response(content="Invalid Twilio signature", status_code=403)
+
         message = whatsapp_service.build_message(
-            body=Body,
-            from_number=From,
-            message_id=MessageSid,
-            message_type=MessageType,
+            body=form_data.get("Body", ""),
+            from_number=form_data.get("From", ""),
+            message_id=form_data.get("MessageSid", ""),
+            message_type=form_data.get("MessageType", "text"),
         )
 
         reply = await whatsapp_service.process_message(message)
