@@ -69,6 +69,29 @@ class DatabaseService:
             logger.error(f"Error creating tool usage: {str(e)}")
             return False
 
+    async def upsert_user_by_phone(
+        self,
+        full_name: str,
+        phone: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Create or update an onboarding user by phone number."""
+        try:
+            data = {
+                "full_name": full_name,
+                "phone": phone,
+            }
+
+            result = self.client.table("users") \
+                .upsert(data, on_conflict="phone") \
+                .execute()
+
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error upserting user by phone {phone}: {str(e)}")
+            return None
+
     async def get_metrics_summary(
         self,
         start_date: datetime,
@@ -241,6 +264,31 @@ class DatabaseService:
             return None
         except Exception as e:
             logger.error(f"Error resolving FPL ID for user {user_id}: {str(e)}")
+            return None
+
+    async def get_user_with_fpl_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
+        """Resolve a WhatsApp phone number to a user and linked FPL ID."""
+        try:
+            user_response = self.client.table("users") \
+                .select("id, phone, email") \
+                .eq("phone", phone) \
+                .limit(1) \
+                .execute()
+
+            if not user_response.data:
+                return None
+
+            user = user_response.data[0]
+            fpl_id = await self.get_fpl_id_by_user_id(user["id"])
+
+            return {
+                "user_id": user["id"],
+                "phone": user.get("phone"),
+                "email": user.get("email"),
+                "fpl_id": fpl_id,
+            }
+        except Exception as e:
+            logger.error(f"Error resolving user by phone {phone}: {str(e)}")
             return None
 
 

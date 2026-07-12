@@ -6,6 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- This table is for additional user metadata
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    full_name TEXT,
     email TEXT UNIQUE,
     phone TEXT UNIQUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

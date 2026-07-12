@@ -22,7 +22,7 @@ class FixturesForRangeInput(BaseModel):
 async def get_players_by_position_tool(
     position: Literal["GKP", "DEF", "MID", "FWD"],
     max_price: float
-) -> List[Dict]:
+) -> Dict:
     """Get players by position and max price."""
     api = FPLOfficialAPIClient()
     data_manager = FPLDataManager(api)

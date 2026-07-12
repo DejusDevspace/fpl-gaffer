@@ -46,7 +46,7 @@ class FPLService:
                 "last_synced_at": current_time,
             }
 
-            result = self.client.table("fpl_teams").upsert(data, on_conflict="fpl_id").execute()
+            result = self.client.table("fpl_teams").upsert(data, on_conflict="user_id").execute()
 
             if result.data and len(result.data) > 0:
                 logger.info(f"FPL team {fpl_id} linked to user {user_id}")

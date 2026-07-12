@@ -29,6 +29,7 @@ class AgentWrapper:
         self,
         prompt: str,
         user_id: Optional[str] = None,
+        fpl_id: Optional[int] = None,
         session_id: Optional[str] = None,
         meta: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
@@ -38,8 +39,7 @@ class AgentWrapper:
         start_time = time.time()
 
         # Resolve User Context
-        fpl_id = None
-        if user_id:
+        if fpl_id is None and user_id:
             fpl_id = await database_service.get_fpl_id_by_user_id(user_id)
 
         # Prepare Graph Input

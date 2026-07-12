@@ -1,6 +1,7 @@
 import json
+import logging
 from typing import Dict, Literal
-from langchain_core.messages import HumanMessage, RemoveMessage
+from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage
 from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.modules import (
     FPLOfficialAPIClient, FPLUserProfileManager, FPLDataManager
@@ -13,6 +14,8 @@ from fpl_gaffer.tools.executor import AsyncToolExecutor
 from fpl_gaffer.utils.chains import get_tools_chain, get_gaffer_response_chain, get_response_validation_chain
 from fpl_gaffer.utils.helpers import get_chat_model
 from fpl_gaffer.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: Decide nodes
@@ -51,7 +54,7 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
     # Node to analyze user messages to get tools to be called?
     additional_context = "N/A"
     if state["is_retry"] and not state.get("validation_passed"):
-        print("Retrying response due to validation errors...")
+        logger.info("Retrying response due to validation errors")
         # Update to capture errors and suggestions
         additional_context = RESPONSE_RETRY_PROMPT.format(
             validation_errors=state["validation_errors"],
@@ -63,9 +66,6 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
     # Pass updated prompt to tools chain
     chain = get_tools_chain(MESSAGE_ANALYSIS_PROMPT)
 
-    print(state["messages"][-1:])
-    # print("State:", state)
-
     response = await chain.ainvoke({
         "messages": state["messages"],
         "user_id": state["user_id"],
@@ -76,7 +76,7 @@ async def message_analysis_node(state: WorkflowState) -> Dict:
         "additional_context": additional_context
     })
 
-    print("Message analysis response:", response)
+    logger.debug("Message analysis response: %s", response)
 
     if response.call_tools:
         return {"tool_calls": response.tool_calls}
@@ -87,7 +87,7 @@ async def tool_execution_node(state: WorkflowState) -> Dict:
     # Node to call tools and return tool results
     # Verify tool calls exist
     if not state.get("tool_calls", None):
-        print("No tool calls to execute.")
+        logger.debug("No tool calls to execute")
         return {"tool_results": {}}
 
     executor = AsyncToolExecutor()
@@ -134,9 +134,9 @@ async def message_generation_node(state: WorkflowState) -> Dict:
         "overall_rank": state["user_data"].get("overall_rank", "N/A"),
         "tool_results": json.dumps(state.get("tool_results", "Not applicable"), indent=2)
     })
-    print("Final Output", response)
+    logger.debug("Generated response: %s", response)
 
-    return {"response": response}
+    return {"response": response.content}
 
 async def response_validation_node(state: WorkflowState) -> Dict:
     # Node to assess response before sending to user (can loop back to tool calls, etc)
@@ -149,12 +149,12 @@ async def response_validation_node(state: WorkflowState) -> Dict:
     }
 
     if state.get("retry_count", 0) >= settings.MAX_RETRIES:
-        print("Max retries reached. Skipping validation.")
+        logger.info("Max retries reached; skipping validation")
         return {
             "validation_passed": True,
             "validation_errors": [],
             "validation_suggestions": [],
-            "messages": state["response"]
+            "messages": AIMessage(content=state["response"])
         }
 
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
@@ -166,14 +166,14 @@ async def response_validation_node(state: WorkflowState) -> Dict:
         "tool_results": state.get("tool_results", "")
     })
 
-    print("Validation response:", response)
+    logger.debug("Validation response: %s", response)
 
     if response.validation_passed:
         return {
             "validation_passed": response.validation_passed,
             "validation_errors": response.errors,
             "validation_suggestions": response.suggestions,
-            "messages": state["response"],
+            "messages": AIMessage(content=state["response"]),
             "retry_count": 0,
             "tool_calls": [],
             "tool_results": {}

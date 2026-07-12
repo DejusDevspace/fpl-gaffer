@@ -1,14 +1,17 @@
 from typing import Literal, Any
+import logging
 from fpl_gaffer.graph.state import WorkflowState
 from langgraph.graph import END
 from fpl_gaffer.settings import settings
+
+logger = logging.getLogger(__name__)
 
 def tool_decision(
     state: WorkflowState
 ) -> Literal["message_generation_node", "tool_execution_node"]:
     # Node to decide whether to go to tool execution node.
     if state.get("tool_calls", None) is None:
-        print("taking message_generation_node")
+        logger.debug("No tool calls selected; routing to message generation")
         return "message_generation_node"
     return "tool_execution_node"
 

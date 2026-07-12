@@ -1,5 +1,30 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
+
+
+class PhoneVerificationRequest(BaseModel):
+    phone: str = Field(..., min_length=5)
+
+
+class PhoneVerificationResponse(BaseModel):
+    status: str
+    phone: str
+
+
+class OnboardingRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=5)
+    fpl_id: int = Field(..., gt=0)
+    verification_code: str = Field(..., min_length=4)
+
+
+class OnboardingResponse(BaseModel):
+    status: str
+    user_id: str
+    phone: str
+    fpl_id: int
+    fpl_team_id: str
+    team_name: Optional[str] = None
 
 
 class LinkFPLRequest(BaseModel):
