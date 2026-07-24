@@ -31,6 +31,11 @@ async def verify_team(
             if not user_data:
                 raise HTTPException(status_code=400, detail="Invalid FPL ID")
 
+            # Check if the team is already linked to another user
+            existing_user = await fpl_service.get_user_by_fpl_id(request.fpl_id)
+            if existing_user:
+                raise HTTPException(status_code=409, detail="FPL team is already linked to another user")
+
             # Concat manager name from first and last names (if available)
             first_name = user_data.get("player_first_name", "")
             last_name = user_data.get("player_last_name", "")
