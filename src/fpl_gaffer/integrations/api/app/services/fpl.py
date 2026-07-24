@@ -183,6 +183,20 @@ class FPLService:
             logger.error(f"Error getting user FPL team: {str(e)}")
             return None
 
+    async def get_user_by_fpl_id(self, fpl_id: int) -> Optional[Dict[str, Any]]:
+        """Get user by FPL ID."""
+        try:
+            result = self.client.table("fpl_teams").select("*").eq("fpl_id", fpl_id).execute()
+
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error getting user by FPL ID: {str(e)}")
+            return None
+
     async def get_dashboard_data(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
         Get all dashboard data for a user.
