@@ -10,6 +10,14 @@ class PhoneVerificationResponse(BaseModel):
     status: str
     phone: str
 
+class TeamVerificationRequest(BaseModel):
+    fpl_id: int = Field(..., gt=0)
+
+class TeamVerificationResponse(BaseModel):
+    status: str
+    fpl_id: int
+    team_name: Optional[str]
+    manager_name: Optional[str] = None
 
 class OnboardingRequest(BaseModel):
     name: str = Field(..., min_length=1)

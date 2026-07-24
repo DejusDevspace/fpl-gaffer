@@ -9,12 +9,41 @@ from fpl_gaffer.integrations.api.app.utils.schemas import (
     OnboardingResponse,
     PhoneVerificationRequest,
     PhoneVerificationResponse,
+    TeamVerificationRequest,
+    TeamVerificationResponse
 )
 from fpl_gaffer.modules.fpl import FPLOfficialAPIClient
 from fpl_gaffer.modules.user import FPLUserProfileManager
 
 
 router = APIRouter(prefix="/api/onboarding", tags=["onboarding"])
+
+@router.post("/verify-team", response_model=TeamVerificationResponse)
+async def verify_team(
+    request: TeamVerificationRequest,
+) -> TeamVerificationResponse:
+    """Verify an FPL team."""
+    try:
+        async with FPLOfficialAPIClient() as api:
+            profile_manager = FPLUserProfileManager(api, request.fpl_id)
+            user_data = await profile_manager.extract_user_data(mode="api")
+
+            if not user_data:
+                raise HTTPException(status_code=400, detail="Invalid FPL ID")
+
+            # Concat manager name from first and last names (if available)
+            first_name = user_data.get("player_first_name", "")
+            last_name = user_data.get("player_last_name", "")
+            manager_name = f"{first_name} {last_name}".strip() if first_name or last_name else None
+
+            return TeamVerificationResponse(
+                status="success",
+                fpl_id=request.fpl_id,
+                team_name=user_data.get("name"),
+                manager_name=manager_name,
+            )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid FPL ID or FPL API unavailable") from exc
 
 
 @router.post("/request-code", response_model=PhoneVerificationResponse)
