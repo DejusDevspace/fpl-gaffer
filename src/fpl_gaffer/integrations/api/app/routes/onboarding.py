@@ -47,6 +47,8 @@ async def verify_team(
                 team_name=user_data.get("name"),
                 manager_name=manager_name,
             )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=400, detail="Invalid FPL ID or FPL API unavailable") from exc
 
