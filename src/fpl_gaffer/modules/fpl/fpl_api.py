@@ -17,6 +17,10 @@ class FPLOfficialAPIClient:
         """Get fixtures for the season."""
         return await self._get("/fixtures/")
 
+    async def get_player_summary(self, player_id: int) -> Dict:
+        """Get a single player's fixtures, this-season gameweek history, and past seasons."""
+        return await self._get(f"/element-summary/{player_id}/")
+
     async def get_manager_data(self, manager_id: int) -> Dict:
         """Get basic manager data from the FPL API."""
         return await self._get(f"/entry/{manager_id}/")

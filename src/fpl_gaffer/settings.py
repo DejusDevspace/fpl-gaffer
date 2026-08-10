@@ -29,6 +29,20 @@ class Settings(BaseSettings):
     TAVILY_SEARCH_TOPIC: str = "news"
     INCLUDE_LLM_SUMMARY: str | bool = "advanced"
 
+    # Expert / scout source allow-list for the expert tips tool.
+    FPL_EXPERT_DOMAINS: list[str] = [
+        "fantasyfootballscout.co.uk",
+        "premierleague.com",
+        "fplreview.com",
+        "fantasyfootballpundit.com",
+        "fplgeneral.co.uk",
+    ]
+
+    # Tool limits
+    MAX_FORM_GAMEWEEKS: int = 10
+    MAX_COMPARE_PLAYERS: int = 5
+    MAX_CAPTAIN_HISTORY_GAMEWEEKS: int = 8
+
     # Groq API settings
     GROQ_API_KEY: str
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
