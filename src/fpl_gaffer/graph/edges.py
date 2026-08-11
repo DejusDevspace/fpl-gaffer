@@ -1,4 +1,4 @@
-from typing import Literal, Any
+from typing import Literal
 import logging
 from fpl_gaffer.graph.state import WorkflowState
 from langgraph.graph import END
@@ -6,34 +6,21 @@ from fpl_gaffer.settings import settings
 
 logger = logging.getLogger(__name__)
 
-def tool_decision(
-    state: WorkflowState
-) -> Literal["message_generation_node", "tool_execution_node"]:
-    # Node to decide whether to go to tool execution node.
-    if state.get("tool_calls", None) is None:
-        logger.debug("No tool calls selected; routing to message generation")
-        return "message_generation_node"
-    return "tool_execution_node"
 
-def should_retry_or_summarize(state: WorkflowState) -> str | Any:
-    # Node to decide whether to retry response generation based on validation results
-    # or to summarize the conversation based on number of messages
+def should_continue_to_tools(state: WorkflowState) -> Literal["tool_node", "response_validation_node"]:
+    """After agent_node: if the model asked for tool calls, execute them and loop back to the
+    agent. Otherwise, it produced a final answer - move on to validation."""
+    last_message = state["messages"][-1]
+    if getattr(last_message, "tool_calls", None):
+        return "tool_node"
+    return "response_validation_node"
+
+
+def should_retry_or_summarize(state: WorkflowState):
+    """After validation: retry (back to agent_node), summarize, or end the turn."""
     if state.get("validation_passed", None):
         messages = state["messages"]
-
         if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
             return "summarize_conversation_node"
-
         return END
     return "retry_response_node"
-
-# def should_summarize_conversation(
-#     state: WorkflowState
-# ) -> Literal["summarize_conversation_node", "__end__"]:
-#     # Node to decide whether to summarize the conversation
-#     messages = state["messages"]
-#
-#     if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
-#         return "summarize_conversation_node"
-#
-#     return END
