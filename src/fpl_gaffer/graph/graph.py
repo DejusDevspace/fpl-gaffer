@@ -5,8 +5,9 @@ from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.graph.nodes import (
     context_injection_node, agent_node,
     response_validation_node, retry_response_node, summarize_conversation_node,
+    compact_turn_node,
 )
-from fpl_gaffer.graph.edges import should_continue_to_tools, should_retry_or_summarize
+from fpl_gaffer.graph.edges import should_continue_to_tools, route_after_validation, route_after_compact
 from fpl_gaffer.tools import TOOLS
 
 
@@ -23,13 +24,15 @@ def create_workflow_graph():
     graph_builder.add_node("response_validation_node", response_validation_node)
     graph_builder.add_node("retry_response_node", retry_response_node)
     graph_builder.add_node("summarize_conversation_node", summarize_conversation_node)
+    graph_builder.add_node("compact_turn_node", compact_turn_node)
 
     graph_builder.set_entry_point("context_injection_node")
 
     graph_builder.add_edge("context_injection_node", "agent_node")
     graph_builder.add_conditional_edges("agent_node", should_continue_to_tools)
     graph_builder.add_edge("tool_node", "agent_node")
-    graph_builder.add_conditional_edges("response_validation_node", should_retry_or_summarize)
+    graph_builder.add_conditional_edges("response_validation_node", route_after_validation)
+    graph_builder.add_conditional_edges("compact_turn_node", route_after_compact)
     graph_builder.add_edge("retry_response_node", "agent_node")
     graph_builder.add_edge("summarize_conversation_node", END)
 

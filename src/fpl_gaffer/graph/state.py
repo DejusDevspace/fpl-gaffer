@@ -26,3 +26,7 @@ class WorkflowState(MessagesState):
     tokens_out: int
     latency_ms: float
     model: str
+
+    # Cost controls
+    limits: Dict[str, Any]
+    tool_calls_this_turn: int
