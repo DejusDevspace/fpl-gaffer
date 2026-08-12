@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from fpl_gaffer.graph.nodes import message_generation_node, response_validation_node
+from fpl_gaffer.graph.nodes import agent_node, response_validation_node
 from fpl_gaffer.utils.chains import ResponseValidation
 
 
@@ -18,7 +18,7 @@ class _FakeChain:
 
 
 class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
-    async def test_message_generation_stores_plain_text_response(self):
+    async def test_agent_node_appends_plain_ai_message(self):
         chain = _FakeChain(AIMessage(content="Plain launch response"))
         state = {
             "messages": [HumanMessage(content="How is my team?")],
@@ -29,26 +29,25 @@ class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
                 "total_points": 10,
                 "overall_rank": 1000,
             },
-            "tool_results": {},
         }
 
-        with patch("fpl_gaffer.graph.nodes.get_gaffer_response_chain", return_value=chain):
-            result = await message_generation_node(state)
+        with patch("fpl_gaffer.graph.nodes.get_agent_chain", return_value=chain):
+            result = await agent_node(state)
 
-        self.assertEqual(result["response"], "Plain launch response")
-        self.assertIsInstance(result["response"], str)
+        self.assertEqual(len(result["messages"]), 1)
+        self.assertEqual(result["messages"][0].content, "Plain launch response")
+        self.assertIn("retry_feedback", chain.received)
+        self.assertEqual(chain.received["retry_feedback"], "")
 
-    async def test_validation_appends_ai_message_after_success(self):
+    async def test_validation_stores_plain_response_without_reappending_messages(self):
         chain = _FakeChain(
-            ResponseValidation(
-                validation_passed=True,
-                errors=[],
-                suggestions=[],
-            )
+            ResponseValidation(validation_passed=True, errors=[], suggestions=[])
         )
         state = {
-            "messages": [HumanMessage(content="How is my team?")],
-            "response": "Validated response",
+            "messages": [
+                HumanMessage(content="How is my team?"),
+                AIMessage(content="Validated response"),
+            ],
             "user_id": 123,
             "gameweek_data": {"gameweek": 1},
             "user_data": {
@@ -56,7 +55,6 @@ class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
                 "total_points": 10,
                 "overall_rank": 1000,
             },
-            "tool_results": {},
             "retry_count": 0,
         }
 
@@ -64,8 +62,8 @@ class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
             result = await response_validation_node(state)
 
         self.assertTrue(result["validation_passed"])
-        self.assertIsInstance(result["messages"], AIMessage)
-        self.assertEqual(result["messages"].content, "Validated response")
+        self.assertEqual(result["response"], "Validated response")
+        self.assertNotIn("messages", result)  # no duplicate append - agent_node already did it
 
 
 if __name__ == "__main__":
