@@ -22,7 +22,11 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
     if not fpl_id or state.get("user_data", None) is None:
         if not fpl_id:
-            fpl_id = int(settings.FPL_MANAGER_ID)
+            if settings.DEBUG:
+                logger.warning("No user_id in graph state; falling back to settings.FPL_MANAGER_ID (DEBUG mode)")
+                fpl_id = int(settings.FPL_MANAGER_ID)
+            else:
+                raise ValueError("No FPL user ID provided and DEBUG mode is off — cannot fall back to default.")
 
         api = FPLOfficialAPIClient()
         profile_manager = FPLUserProfileManager(api, fpl_id)

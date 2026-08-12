@@ -41,12 +41,38 @@ class AgentWrapper:
         # Resolve User Context
         if fpl_id is None and user_id:
             fpl_id = await database_service.get_fpl_id_by_user_id(user_id)
+            if fpl_id is None:
+                return {
+                    "text": None,
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "latency_ms": (time.time() - start_time) * 1000,
+                    "cost_usd": 0.0,
+                    "model": settings.GROQ_MODEL_NAME,
+                    "status": "error",
+                    "error": "Could not resolve an FPL ID for this user.",
+                }
 
         # Prepare Graph Input
         # We use a message object for the graph state
+        if fpl_id is None:
+            if settings.DEBUG:
+                fpl_id = settings.FPL_MANAGER_ID
+            else:
+                return {
+                    "text": None,
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "latency_ms": (time.time() - start_time) * 1000,
+                    "cost_usd": 0.0,
+                    "model": settings.GROQ_MODEL_NAME,
+                    "status": "error",
+                    "error": "No FPL ID available for this request.",
+                }
+
         inputs = {
             "messages": [{"role": "user", "content": prompt}],
-            "user_id": fpl_id or settings.FPL_MANAGER_ID,
+            "user_id": fpl_id,
             "is_retry": False,
             "retry_count": 0
         }
