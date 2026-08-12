@@ -14,11 +14,16 @@ class ResponseValidation(BaseModel):
     suggestions: List[str] = Field(..., description="List of what should be fixed or looked into.")
 
 
-def get_agent_chain(prompt_template: str):
+def get_agent_chain(prompt_template: str, bind_tools: bool = True):
     """Create the main agent chain: system prompt + conversation history, with tools bound via
     native function-calling. The model decides whether to call tools, which ones, and with what
-    arguments — it may return zero, one, or several tool calls in a single response."""
-    model = get_chat_model().bind_tools(TOOLS)
+    arguments — it may return zero, one, or several tool calls in a single response.
+
+    When bind_tools is False (e.g. tool-call budget exhausted), the model is returned without
+    tools bound, forcing it to produce a content-only answer."""
+    model = get_chat_model()
+    if bind_tools:
+        model = model.bind_tools(TOOLS)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", prompt_template),

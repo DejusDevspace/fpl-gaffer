@@ -17,7 +17,6 @@ class Settings(BaseSettings):
 
     # Messages settings
     MESSAGES_AFTER_SUMMARY: int = 2
-    MESSAGES_SUMMARY_TRIGGER: int = 4
 
     # FPL Official API settings
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"
@@ -50,6 +49,10 @@ class Settings(BaseSettings):
 
     # Resource limits
     MAX_RETRIES: int = 1
+
+    # Cost control limits (single global tier today; see core/limits.py for the per-user hook)
+    MAX_TOOL_CALLS_PER_TURN: int = 6
+    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 3000
 
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
