@@ -17,7 +17,7 @@ class FPLTeamDataManger:
         """Get bootstrap data from FPL API."""
         return await self.api.get_bootstrap_data()
 
-    async def extract_team_data(self) -> Dict:
+    async def extract_team_data(self) -> Dict | None:
         """Get team data for a particular user."""
         team_data = await self.get_latest_team_data()
         return team_data
@@ -150,12 +150,13 @@ class FPLTeamDataManger:
 
         return transfers
 
-    async def get_captain_picks(self) -> List[Dict[str, Any]]:
-        """Get user captain picks history"""
+    async def get_captain_picks(self, num_gameweeks: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Get user captain/vice-captain picks history. Pass num_gameweeks to limit to the most
+        recent N gameweeks instead of the whole season."""
         # Get bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
+        if not bootstrap_data:
             return []
 
         # Build mappings from bootstrap data
@@ -167,11 +168,14 @@ class FPLTeamDataManger:
                 gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")
             ), None)
             self.current_gw = current_gw.get("id")
-        # print(current_gw)
+
+        start_gw = 1
+        if num_gameweeks is not None:
+            start_gw = max(1, self.current_gw - num_gameweeks + 1)
 
         captain_picks = []
         # Get the team data for the gameweeks till present
-        for gw in range(1, self.current_gw + 1):
+        for gw in range(start_gw, self.current_gw + 1):
             team_data = await self.api.get_gameweek_picks(self.manager_id, gw)
             # Get picks from team data
             picks = team_data.get("picks", [])
@@ -201,7 +205,7 @@ class FPLTeamDataManger:
 
         return captain_picks
 
-    async def get_user_leagues(self) -> Dict:
+    async def get_user_leagues(self) -> Dict | None:
         """Get user's leagues data."""
         manager_data = await self.api.get_manager_data(self.manager_id)
         leagues_data = manager_data.get("leagues")

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from fpl_gaffer.tools.user import get_user_team_info_tool
+from fpl_gaffer.tools.user import get_user_team_info
 
 
 class UserToolTests(unittest.IsolatedAsyncioTestCase):
@@ -13,7 +13,7 @@ class UserToolTests(unittest.IsolatedAsyncioTestCase):
             "fpl_gaffer.tools.user.FPLTeamDataManger",
             return_value=team_manager,
         ) as manager_cls:
-            result = await get_user_team_info_tool(manager_id=123, gameweek=5)
+            result = await get_user_team_info(manager_id=123, gameweek=5)
 
         manager_cls.assert_called_once()
         _, manager_id, picks_gameweek = manager_cls.call_args.args
@@ -29,10 +29,23 @@ class UserToolTests(unittest.IsolatedAsyncioTestCase):
             "fpl_gaffer.tools.user.FPLTeamDataManger",
             return_value=team_manager,
         ) as manager_cls:
-            await get_user_team_info_tool(manager_id=123, gameweek=1)
+            await get_user_team_info(manager_id=123, gameweek=1)
 
         _, _, picks_gameweek = manager_cls.call_args.args
         self.assertEqual(picks_gameweek, 1)
+
+    async def test_user_team_tool_returns_error_dict_on_failure(self):
+        team_manager = Mock()
+        team_manager.extract_team_data = AsyncMock(side_effect=RuntimeError("boom"))
+
+        with patch(
+            "fpl_gaffer.tools.user.FPLTeamDataManger",
+            return_value=team_manager,
+        ):
+            result = await get_user_team_info(manager_id=123, gameweek=5)
+
+        self.assertIn("error", result)
+        self.assertIn("boom", result["error"])
 
 
 if __name__ == "__main__":

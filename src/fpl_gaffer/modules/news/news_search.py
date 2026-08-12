@@ -25,7 +25,7 @@ class FPLNewsSearchClient:
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
     @property
-    def client(self) -> AsyncTavilyClient:
+    def client(self) -> AsyncTavilyClient | None:
         """Get or create TavilyClient instance (singleton pattern)."""
         if self._client is None:
             self._client = AsyncTavilyClient(
@@ -33,9 +33,9 @@ class FPLNewsSearchClient:
             )
         return self._client
 
-    async def search_news(self, query: str) -> Dict:
-        """Core function to search for news."""
-        results = await self._search(query)
+    async def search_news(self, query: str, include_domains: Optional[List[str]] = None) -> Dict:
+        """Core function to search for news, optionally restricted to a domain allow-list."""
+        results = await self._search(query, include_domains=include_domains)
 
         # TODO: Convert search results to documents?
         return results
@@ -44,17 +44,20 @@ class FPLNewsSearchClient:
         """Convert a tavily search result dictionary into a langchain Document."""
         pass
 
-    async def _search(self, query: str) -> Dict:
+    async def _search(self, query: str, include_domains: Optional[List[str]] = None) -> Dict:
         """Internal search helper."""
         try:
-            return await self.client.search(
+            kwargs = dict(
                 query=query,
                 search_depth=settings.TAVILY_SEARCH_DEPTH,
                 max_results=settings.TAVILY_MAX_SEARCH_RESULTS,
                 topic=settings.TAVILY_SEARCH_TOPIC,
                 include_answer=settings.INCLUDE_LLM_SUMMARY,
-                include_raw_content=False
+                include_raw_content=False,
             )
+            if include_domains:
+                kwargs["include_domains"] = include_domains
+            return await self.client.search(**kwargs)
         except Exception as e:
             raise NewsSearchError(
                 f"Failed to retrieve search results for query '{query}': {e}"

@@ -1,39 +1,33 @@
-from typing import Literal, Any
 import logging
-from fpl_gaffer.graph.state import WorkflowState
+from typing import Literal
 from langgraph.graph import END
-from fpl_gaffer.settings import settings
+from fpl_gaffer.graph.state import WorkflowState
+from fpl_gaffer.core.limits import DEFAULT_LIMITS
+from fpl_gaffer.utils.tokens import estimate_message_tokens
 
 logger = logging.getLogger(__name__)
 
-def tool_decision(
-    state: WorkflowState
-) -> Literal["message_generation_node", "tool_execution_node"]:
-    # Node to decide whether to go to tool execution node.
-    if state.get("tool_calls", None) is None:
-        logger.debug("No tool calls selected; routing to message generation")
-        return "message_generation_node"
-    return "tool_execution_node"
 
-def should_retry_or_summarize(state: WorkflowState) -> str | Any:
-    # Node to decide whether to retry response generation based on validation results
-    # or to summarize the conversation based on number of messages
+def should_continue_to_tools(state: WorkflowState) -> Literal["tool_node", "response_validation_node"]:
+    """After agent_node: if the model asked for tool calls, execute them and loop back to the
+    agent. Otherwise, it produced a final answer - move on to validation."""
+    last_message = state["messages"][-1]
+    if getattr(last_message, "tool_calls", None):
+        return "tool_node"
+    return "response_validation_node"
+
+
+def route_after_validation(state: WorkflowState):
+    """After validation: retry, or move on to post-turn cleanup."""
     if state.get("validation_passed", None):
-        messages = state["messages"]
-
-        if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
-            return "summarize_conversation_node"
-
-        return END
+        return "compact_turn_node"
     return "retry_response_node"
 
-# def should_summarize_conversation(
-#     state: WorkflowState
-# ) -> Literal["summarize_conversation_node", "__end__"]:
-#     # Node to decide whether to summarize the conversation
-#     messages = state["messages"]
-#
-#     if len(messages) > settings.MESSAGES_SUMMARY_TRIGGER:
-#         return "summarize_conversation_node"
-#
-#     return END
+
+def route_after_compact(state: WorkflowState):
+    """After cleanup: summarize if the (now-pruned) history is still large, or end the turn."""
+    limits = state.get("limits") or DEFAULT_LIMITS
+    token_count = estimate_message_tokens(state["messages"])
+    if token_count > limits["max_context_tokens_before_summary"]:
+        return "summarize_conversation_node"
+    return END

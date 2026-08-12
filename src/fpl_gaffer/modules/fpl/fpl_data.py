@@ -1,9 +1,15 @@
 from typing import List, Tuple, Dict, Literal
+
+from fpl_gaffer.core.exceptions import FPLAPIError
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
 DEFAULT_PLAYER_RESULT_LIMIT = 8
 MAX_FIXTURE_GAMEWEEKS = 5
+DEFAULT_FORM_GAMEWEEKS = 5
+MAX_FORM_GAMEWEEKS = 10
+MAX_COMPARE_PLAYERS = 5
+DEFAULT_DIFFERENTIAL_LIMIT = 8
 
 
 class FPLDataManager:
@@ -14,7 +20,7 @@ class FPLDataManager:
         """Get info for the current gameweek with fixtures and deadline."""
         bootstrap_data, teams, next_gw = await self._fetch_bootstrap_and_next_gw()
 
-        if bootstrap_data is None or next_gw is None:
+        if not bootstrap_data or next_gw is None:
             return {}
 
         if not include_fixtures:
@@ -54,7 +60,7 @@ class FPLDataManager:
         """Get fixtures from the current gameweek to the next x gameweeks."""
         bootstrap_data, teams, next_gw = await self._fetch_bootstrap_and_next_gw()
 
-        if bootstrap_data is None or next_gw is None:
+        if not bootstrap_data or next_gw is None:
             return {}
 
         # Get fixtures for the next x gameweeks
@@ -91,6 +97,21 @@ class FPLDataManager:
             "truncated": requested_gameweeks > num_gameweeks,
             "fixtures": upcoming_fixtures
         }
+
+    @staticmethod
+    def _match_players_by_name(all_players: List[Dict], player_names: List[str]) -> List[Dict]:
+        """Return bootstrap player rows whose name fields match any of the given queries."""
+        query_players = [n.lower() for n in player_names]
+        matched = []
+        for player in all_players:
+            first_name = player.get("first_name", "").lower()
+            second_name = player.get("second_name", "").lower()
+            web_name = player.get("web_name", "").lower()
+            for q in query_players:
+                if (q in first_name) or (q in second_name) or (q in web_name):
+                    matched.append(player)
+                    break
+        return matched
 
     @staticmethod
     def _compact_player(
@@ -147,8 +168,8 @@ class FPLDataManager:
         # Get bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
-            return []
+        if not bootstrap_data:
+            return {}
 
         # Build mappings
         players, teams, positions = build_mappings(bootstrap_data)
@@ -159,7 +180,7 @@ class FPLDataManager:
         ), None)
 
         if position_id is None:
-            return []
+            return {}
 
         matched_players = []
         for player in bootstrap_data.get("elements", []):
@@ -184,44 +205,252 @@ class FPLDataManager:
         # Get bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
+        if not bootstrap_data:
             return []
 
         _, teams, positions = build_mappings(bootstrap_data)
 
         # Get all players from bootstrap data
         all_players = bootstrap_data.get("elements", [])
-        query_players = [n.lower() for n in player_names]
-
-        matched_players = []
-        for player in all_players:
-            # Get player names
-            first_name = player.get("first_name", "").lower()
-            second_name = player.get("second_name", "").lower()
-            web_name = player.get("web_name", "").lower()
-
-            for q in query_players:
-                # Match if the query appears in any of the name fields
-                if (q in first_name) or (q in second_name) or (q in web_name):
-                    matched_players.append(self._compact_player(player, teams, positions))
-                    break
+        matched_players = [
+            self._compact_player(player, teams, positions)
+            for player in self._match_players_by_name(all_players, player_names)
+        ]
 
         return matched_players
+
+    async def get_player_gameweek_history(
+        self,
+        player_names: List[str],
+        num_gameweeks: int = DEFAULT_FORM_GAMEWEEKS,
+    ) -> Dict:
+        """Get each named player's points/minutes/underlying-stats trend over their last N
+        completed gameweeks. Use this to judge current form, not just the season-to-date total."""
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if not bootstrap_data:
+            return {}
+
+        _, teams, positions = build_mappings(bootstrap_data)
+        all_players = bootstrap_data.get("elements", [])
+        matched = self._match_players_by_name(all_players, player_names)
+
+        num_gameweeks = max(1, min(num_gameweeks, MAX_FORM_GAMEWEEKS))
+
+        players_form = []
+        for player in matched:
+            compact = self._compact_player(player, teams, positions)
+            try:
+                summary = await self.api.get_player_summary(player["id"])
+            except Exception:
+                players_form.append({**compact, "recent_gameweeks": [], "note": "history unavailable"})
+                continue
+
+            history = summary.get("history", [])[-num_gameweeks:]
+            recent = [
+                {
+                    "gameweek": gw.get("round"),
+                    "opponent": teams.get(gw.get("opponent_team"), "Unknown"),
+                    "was_home": gw.get("was_home"),
+                    "minutes": gw.get("minutes"),
+                    "points": gw.get("total_points"),
+                    "goals": gw.get("goals_scored"),
+                    "assists": gw.get("assists"),
+                    "bonus": gw.get("bonus"),
+                    "ict_index": gw.get("ict_index"),
+                }
+                for gw in history
+            ]
+
+            players_form.append({
+                **compact,
+                "gameweeks_analyzed": len(recent),
+                "recent_gameweeks": recent,
+            })
+
+        return {
+            "requested_gameweeks": num_gameweeks,
+            "players": players_form,
+            "not_found": [
+                n for n in player_names if n.lower() not in {
+                    p.get("web_name", "").lower() for p in matched
+                }
+            ],
+        }
+
+    async def compare_players(
+        self,
+        player_names: List[str],
+        num_gameweeks_form: int = DEFAULT_FORM_GAMEWEEKS,
+    ) -> Dict:
+        """Compare 2-5 named players side by side: season stats plus recent-form averages, so the
+        agent can reason about who's the better pick right now rather than only on season totals."""
+        if len(player_names) < 2:
+            return {"error": "Need at least 2 player names to compare."}
+
+        player_names = player_names[:MAX_COMPARE_PLAYERS]
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if not bootstrap_data:
+            return {}
+
+        _, teams, positions = build_mappings(bootstrap_data)
+        all_players = bootstrap_data.get("elements", [])
+        matched = self._match_players_by_name(all_players, player_names)
+
+        num_gameweeks_form = max(1, min(num_gameweeks_form, MAX_FORM_GAMEWEEKS))
+
+        comparison = []
+        for player in matched:
+            compact = self._compact_player(player, teams, positions)
+            try:
+                summary = await self.api.get_player_summary(player["id"])
+                history = summary.get("history", [])[-num_gameweeks_form:]
+            except Exception:
+                history = []
+
+            if history:
+                avg_points = round(sum(gw.get("total_points", 0) for gw in history) / len(history), 2)
+                avg_minutes = round(sum(gw.get("minutes", 0) for gw in history) / len(history), 1)
+            else:
+                avg_points, avg_minutes = None, None
+
+            comparison.append({
+                **compact,
+                "form_window_gameweeks": len(history),
+                "avg_points_recent": avg_points,
+                "avg_minutes_recent": avg_minutes,
+            })
+
+        return {
+            "compared": len(comparison),
+            "players": comparison,
+            "not_found": [
+                n for n in player_names if n.lower() not in {
+                    p.get("web_name", "").lower() for p in matched
+                }
+            ],
+        }
+
+    async def get_price_movers(
+        self,
+        direction: Literal["rising", "falling"] = "rising",
+        limit: int = DEFAULT_PLAYER_RESULT_LIMIT,
+    ) -> Dict:
+        """Get players whose price is currently rising or falling the most, based on this
+        gameweek's transfer activity. Useful for timing transfers before a price change."""
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if not bootstrap_data:
+            return {}
+
+        _, teams, positions = build_mappings(bootstrap_data)
+        elements = bootstrap_data.get("elements", [])
+
+        def change(p):
+            try:
+                return float(p.get("cost_change_event", 0))
+            except (TypeError, ValueError):
+                return 0.0
+
+        if direction == "rising":
+            candidates = [p for p in elements if change(p) > 0]
+            candidates.sort(key=change, reverse=True)
+        else:
+            candidates = [p for p in elements if change(p) < 0]
+            candidates.sort(key=change)
+
+        limit = max(1, min(limit, DEFAULT_PLAYER_RESULT_LIMIT * 2))
+        selected = candidates[:limit]
+
+        movers = []
+        for p in selected:
+            compact = self._compact_player(p, teams, positions)
+            movers.append({
+                **compact,
+                "price_change_this_event": change(p) / 10,
+                "transfers_in_event": p.get("transfers_in_event"),
+                "transfers_out_event": p.get("transfers_out_event"),
+            })
+
+        return {
+            "direction": direction,
+            "count": len(movers),
+            "total_matches": len(candidates),
+            "truncated": len(candidates) > len(movers),
+            "players": movers,
+        }
+
+    async def get_differential_candidates(
+        self,
+        position: Literal["GKP", "DEF", "MID", "FWD"],
+        max_price: float = 15.0,
+        max_ownership_percent: float = 10.0,
+        min_form: float = 3.0,
+        limit: int = DEFAULT_DIFFERENTIAL_LIMIT,
+    ) -> Dict:
+        """Find low-ownership players with strong current form/points for a position and budget -
+        candidates for a differential pick that isn't showing up in expert-consensus searches.
+        Numbers-only signal: the agent should present these as a flagged option, not a mainstream
+        recommendation."""
+        bootstrap_data = await self.api.get_bootstrap_data()
+
+        if not bootstrap_data:
+            return {}
+
+        players, teams, positions = build_mappings(bootstrap_data)
+        position_id = next((
+            pid for pid, pname in positions.items() if pname.lower() == position.lower()
+        ), None)
+        if position_id is None:
+            return {}
+
+        def as_float(value, default=0.0):
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return default
+
+        candidates = []
+        for p in bootstrap_data.get("elements", []):
+            if p.get("element_type") != position_id:
+                continue
+            if (p.get("now_cost", 0) / 10) > max_price:
+                continue
+            if as_float(p.get("selected_by_percent")) > max_ownership_percent:
+                continue
+            if as_float(p.get("form")) < min_form:
+                continue
+            candidates.append(p)
+
+        candidates.sort(key=self._player_sort_key, reverse=True)
+        selected = candidates[:limit]
+
+        return {
+            "position": position,
+            "max_price": max_price,
+            "max_ownership_percent": max_ownership_percent,
+            "min_form": min_form,
+            "count": len(selected),
+            "total_matches": len(candidates),
+            "truncated": len(candidates) > len(selected),
+            "players": [self._compact_player(p, teams, positions) for p in selected],
+        }
 
     async def _fetch_bootstrap_and_next_gw(self) -> Tuple[Dict, Dict, Dict]:
         """Internal helper to fetch bootstrap data and next gameweek info."""
         # Fetch bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
+        if not bootstrap_data:
             return {}, {}, {}
 
         # Build team mappings using fpl_mapper
         _, teams, _ = build_mappings(bootstrap_data)
 
         # Get next gameweek from bootstrap data
-        next_gw = next((
+        next_gw = (next((
             gw for gw in bootstrap_data.get("events", []) if gw.get("is_next")
-        ), None)
+        ), None))
 
         return bootstrap_data, teams, next_gw

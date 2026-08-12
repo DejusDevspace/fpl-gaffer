@@ -17,7 +17,6 @@ class Settings(BaseSettings):
 
     # Messages settings
     MESSAGES_AFTER_SUMMARY: int = 2
-    MESSAGES_SUMMARY_TRIGGER: int = 4
 
     # FPL Official API settings
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"
@@ -29,6 +28,20 @@ class Settings(BaseSettings):
     TAVILY_SEARCH_TOPIC: str = "news"
     INCLUDE_LLM_SUMMARY: str | bool = "advanced"
 
+    # Expert / scout source allow-list for the expert tips tool.
+    FPL_EXPERT_DOMAINS: list[str] = [
+        "fantasyfootballscout.co.uk",
+        "premierleague.com",
+        "fplreview.com",
+        "fantasyfootballpundit.com",
+        "fplgeneral.co.uk",
+    ]
+
+    # Tool limits
+    MAX_FORM_GAMEWEEKS: int = 10
+    MAX_COMPARE_PLAYERS: int = 5
+    MAX_CAPTAIN_HISTORY_GAMEWEEKS: int = 8
+
     # Groq API settings
     GROQ_API_KEY: str
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
@@ -36,6 +49,10 @@ class Settings(BaseSettings):
 
     # Resource limits
     MAX_RETRIES: int = 1
+
+    # Cost control limits (single global tier today; see core/limits.py for the per-user hook)
+    MAX_TOOL_CALLS_PER_TURN: int = 6
+    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 3000
 
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
