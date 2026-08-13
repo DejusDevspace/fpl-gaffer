@@ -1,169 +1,161 @@
 # ⚽ FPL Gaffer
 
-> Your AI-powered Fantasy Premier League co-manager that provides data-driven insights, transfer suggestions, and tactical advice.
+> Your AI-powered Fantasy Premier League co-manager with data-driven insights, transfer suggestions, and tactical advice, delivered straight to you on WhatsApp.
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/Status-In%20Progress-yellow.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 📖 Overview
+## Overview
 
-**FPL Gaffer** is an intelligent agentic AI system designed to assist Fantasy Premier League (FPL) managers with informed decision-making. Built using LangGraph, it combines real-time data retrieval, intelligent tool orchestration, and response validation to provide accurate, hallucination-free advice for your FPL team.
+**FPL Gaffer** is an agentic AI assistant for Fantasy Premier League managers. It combines real-time FPL data, expert/scout analysis, and a self-validating response loop to give you advice that's grounded in actual numbers, not guesswork.
 
-Unlike generic chatbots, FPL Gaffer:
-- 🎯 **Never hallucinates** - Every suggestion is backed by real data
-- 🔄 **Self-validates** - Automatically checks responses for accuracy before sending
-- 🧠 **Learns from mistakes** - Validation feedback loops back to gather missing data
-- 💬 **Speaks FPL** - Uses community language and understands the game deeply
-- 📱 **WhatsApp-ready** - Conversational, plain-text responses perfect for mobile
+Built on [LangGraph](https://github.com/langchain-ai/langgraph) with native tool-calling, it reasons about what data it needs, fetches it, validates its own answer, and delivers a WhatsApp-friendly plain-text response.
 
-## 🌟 Key Features
+### What makes it different
 
-### Intelligent Agent Architecture
-- **Context-Aware Processing**: Automatically injects user context (team value, budget, rank) into every interaction
-- **Smart Tool Selection**: LLM-powered analysis determines which data sources to query
-- **Multi-Tool Orchestration**: Seamlessly combines multiple data sources for comprehensive answers
-- **Validation Loop**: Self-corrects by detecting hallucinations and gathering missing data
-- **Conversation Memory**: MySQL checkpointer maintains conversation history for contextual responses
+- **Never hallucinates** - every claim is checked against the tool results that produced it
+- **Self-validates** - a dedicated validation node catches unsupported claims before they reach you
+- **Speaks FPL** - differentials, punts, fixture swings, captaincy calls, not corporate chatbot language
+- **WhatsApp-native** - plain text, short and punchy, designed for mobile
+- **Cost-controlled** - per-turn tool-call budgets, turn compaction, and token-based summarization keep context lean
 
-### FPL-Specific Capabilities
-- 📊 **Team Analysis**: Detailed insights into your current squad, transfers, and finances
-- 🔍 **Player Research**: Stats, form, injuries, and pricing for informed transfers
-- 📅 **Fixture Analysis**: Upcoming schedule planning for captain picks and transfers
-- 💰 **Budget Planning**: Smart suggestions within your exact financial constraints
-- 📰 **News Integration**: Real-time injury updates, press conferences, and expert opinions
-- 🎲 **Transfer Suggestions**: Position-based player recommendations with filters
+## Architecture
 
-## 🏗️ Architecture
+### Graph Topology
 
-### Workflow Graph
+```
+context_injection → agent_node ⟷ tool_node
+                         ↓
+               response_validation → compact_turn → (summarize | END)
+                         ↓
+                   retry_response → agent_node
+```
 
-<img src="./img/gaffer-flow.png" alt="Workflow Graph" height="550" width="">
+| Node                          | Role                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `context_injection_node`      | Loads user/gameweek data, resolves per-user limits, resets turn counter                                      |
+| `agent_node`                  | LLM turn — calls tools or produces a final answer. Unbinds tools when budget is exhausted                    |
+| `tool_node`                   | `ToolNode(TOOLS, handle_tool_errors=True)` — executes tool calls, loops back to agent                        |
+| `response_validation_node`    | Checks the final answer for hallucinations against this turn's tool results. Skipped when no tools were used |
+| `compact_turn_node`           | Strips intermediate tool messages from history, keeping only the question and answer                         |
+| `summarize_conversation_node` | Compresses history when estimated token count exceeds threshold                                              |
+| `retry_response_node`         | Flags the next agent pass as a retry with validation feedback                                                |
 
-### Key Components
+### State
 
-#### 1. **State Management** (`state.py`)
 ```python
 class WorkflowState(MessagesState):
-    """State for the FPL Gaffer workflow."""
-
-    # User & gameweek context
-    user_id: int
+    user_id: str
     user_data: Dict[str, Any]
     gameweek_data: Dict
 
-    # Tool execution
-    tool_calls: List[Dict[str, Any]]
-    tool_results: Dict[str, Any]
-
-    # Response generation
     response: str
+    summary: str
 
-    # Validation and control flow
     is_retry: bool
     retry_count: int
     validation_passed: bool
     validation_errors: List[str]
     validation_suggestions: List[str]
+
+    tokens_in: int
+    tokens_out: int
+    latency_ms: float
+    model: str
+
+    limits: Dict[str, Any]
+    tool_calls_this_turn: int
 ```
 
-#### 2. **Intelligent Tool Selection**
-The tool selection node uses LLM reasoning to determine which tools are needed:
-- **Initial requests**: Analyzes user query directly
-- **Retry requests**: Processes validation feedback to gather missing data
+## Tools
 
-```python
-# Example validation feedback loop:
-Validation: "Response mentions 'good fixtures' but no fixture data retrieved"
-         ↓
-Retry Tool Selection: Calls get_fixtures_for_range_tool()
-         ↓
-New Response: Based on actual fixture data
-```
+All tools use `@tool` decorators with Pydantic input schemas. The model decides which to call via native function-calling.
 
-#### 3. **Validation System**
-Prevents hallucinations by checking:
-- ✅ All player suggestions exist in tool results
-- ✅ Price recommendations match user budget
-- ✅ Fixture claims backed by actual data
-- ✅ Statistics match retrieved information
-- ✅ All user questions addressed with real data
+| Tool                               | What it does                                            |
+| ---------------------------------- | ------------------------------------------------------- |
+| `news_search_tool`                 | Search FPL news, injuries, press conferences            |
+| `get_expert_tips_tool`             | Scout/pundit consensus from curated expert sources      |
+| `get_user_team_info_tool`          | Squad, transfers, budget, captain picks                 |
+| `get_user_transfer_history_tool`   | Transfer history for the current season                 |
+| `get_user_captain_history_tool`    | Captain pick trends over recent gameweeks               |
+| `get_league_standings_tool`        | Mini-league or overall league standings                 |
+| `get_players_by_position_tool`     | Transfer candidates filtered by position and max price  |
+| `get_player_data_tool`             | Detailed stats, form, and injury news for named players |
+| `get_fixtures_for_range_tool`      | Upcoming fixtures with difficulty ratings               |
+| `get_player_form_tool`             | Gameweek-by-gameweek form trend for named players       |
+| `compare_players_tool`             | Head-to-head stat comparison for up to 5 players        |
+| `get_price_movers_tool`            | Players rising/falling in price                         |
+| `get_differential_candidates_tool` | Low-ownership players with strong underlying stats      |
 
-## 🛠️ Available Tools
+## Cost Controls
 
-| Tool | Description | Use Case |
-|------|-------------|----------|
-| `news_search_tool` | Search FPL news, injuries, press conferences | Player news, expert opinions, updates |
-| `get_user_team_info_tool` | Retrieve user's squad, transfers, finances | Team analysis, budget planning |
-| `get_players_by_position_tool` | Filter players by position & max price | Transfer targets, squad building |
-| `get_player_data_tool` | Get detailed player stats, form, injuries | Player comparison, transfer decisions |
-| `get_fixtures_for_range_tool` | Get upcoming fixtures for X gameweeks | Captain picks, fixture planning |
+| Control                       | How it works                                                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Tool-call budget**          | `MAX_TOOL_CALLS_PER_TURN` (default 6) — tools are unbound from the model once exhausted, forcing a content-only answer |
+| **Validation skip**           | No-tool turns skip the validation LLM call entirely (nothing to hallucinate from)                                      |
+| **Turn-scoped validation**    | Validation context is this turn's exchange only, not the full conversation                                             |
+| **Turn compaction**           | `compact_turn_node` prunes ToolMessages and intermediate AI tool-call messages after each turn                         |
+| **Token-based summarization** | `MAX_CONTEXT_TOKENS_BEFORE_SUMMARY` (default 3000) replaces the old message-count trigger                              |
+| **Per-user limits hook**      | `core/limits.py::resolve_limits()` returns global defaults today; designed for future subscription tiers               |
 
+## Example Interactions
 
-## 🎮 Example Interactions
+**Transfer advice:**
 
-### Transfer Advice
 ```
 User: "I have £1.5m in the bank. Any good midfielders I should look at?"
 
-FPL Gaffer: "Nice budget to work with! Let me check the mid-priced midfielders 
-for you... Palmer (£6.8m) is looking cracking right now - 3 goals in last 4 games 
-and Chelsea's fixtures are solid. Saka (£9.0m) is another shout if you can stretch 
-the budget a bit. Both on penalties too which is a bonus!"
+Gaffer: "Nice budget to work with! Palmer (£6.8m) is looking cracking right
+now - 3 goals in last 4 games and Chelsea's fixtures are solid. Saka (£9.0m)
+is another shout if you can stretch the budget. Both on penalties too 🎯"
 ```
 
-### Fixture Analysis
+**Fixture planning:**
+
 ```
 User: "What are the fixtures like for the next 3 gameweeks?"
 
-FPL Gaffer: "Right, let's look ahead...GW10-12 is massive for City assets - they've 
-got Bournemouth (H), Brighton (A), and Spurs (H). Haaland differential could be 
-huge here. Arsenal have a mixed bag with Liverpool (A) sandwiched between two 
-decent fixtures. Villa's got the best run though - all green on the ticker!"
+Gaffer: "Right, let's look ahead... GW10-12 is massive for City assets -
+Bournemouth (H), Brighton (A), Spurs (H). Haaland differential could be huge.
+Villa's got the best run though - all green on the ticker!"
 ```
 
-### Team Analysis
+**Team review:**
+
 ```
 User: "How's my team looking?"
 
-FPL Gaffer: "Your team's solid mate! Sitting at £102.5m value with £0.5m ITB. 
-You've got the template sorted with Salah and Haaland up top. Defense might need 
-a look though - you've got three players with tough fixtures coming up. Fancy 
-making a move there?"
+Gaffer: "Solid squad mate! Sitting at £102.5m value with £0.5m ITB. Template
+sorted with Salah and Haaland. Defence might need a look though - three
+players with tough fixtures coming up. Fancy making a move there?"
 ```
 
-## 🏆 Why FPL Gaffer?
+## Project Structure
 
-### Technical Excellence
-- **Agentic AI Design**: Not just a chatbot - FPL Gaffer reasons about what data it needs
-- **Self-Healing Responses**: Validation loops ensure accuracy before delivery
-- **Modular Architecture**: Clean separation of concerns for easy maintenance
-- **Production-Ready**: MySQL persistence, error handling, retry logic
+```
+src/fpl_gaffer/
+├── core/               # Prompts, limits, settings
+├── graph/              # State, nodes, edges, graph topology
+├── integrations/       # FastAPI app, WhatsApp webhook, services
+├── modules/            # FPL API client, data managers, news search
+├── tools/              # @tool-decorated functions (fpl, news, user)
+└── utils/              # Chain builders, token estimation, helpers
+```
 
-### FPL-Specific Intelligence
-- **Domain Expertise**: Understands FPL strategy, not just player stats
-- **Community Language**: Speaks like an FPL veteran
-- **Budget-Aware**: Never suggests transfers you can't afford
-- **Fixture-Conscious**: Considers short and long-term planning
+## License
 
-### Real-World Impact
-- **No Hallucinations**: Only suggests players and strategies backed by data
-- **Conversational**: Feels like chatting with your FPL-obsessed mate
-- **Mobile-First**: Designed for WhatsApp, perfect for deadline decisions
-- **Memory**: Remembers your previous conversations and team decisions
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
+## Author
 
 **DejusDevspace**
-- GitHub: [@DejusDevsapce](https://github.com/DejusDevspace)
+
+- GitHub: [@DejusDevspace](https://github.com/DejusDevspace)
 - LinkedIn: [Ojomideju Adejo](https://linkedin.com/in/deju-adejo)
 - Twitter: [@d3ju.ai](https://x.com/adejo_deju)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [LangGraph](https://github.com/langchain-ai/langgraph) for the agent framework
 - [Fantasy Premier League API](https://fantasy.premierleague.com) for FPL data
