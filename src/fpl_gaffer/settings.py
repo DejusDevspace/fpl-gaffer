@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"
 
     # FPL News Search Client settings
-    TAVILY_API_KEY: str
+    TAVILY_API_KEY: str = ""
     TAVILY_SEARCH_DEPTH: str = "advanced"
     TAVILY_MAX_SEARCH_RESULTS: int = 3
     TAVILY_SEARCH_TOPIC: str = "news"
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     MAX_CAPTAIN_HISTORY_GAMEWEEKS: int = 8
 
     # Groq API settings
-    GROQ_API_KEY: str
+    GROQ_API_KEY: str = ""
     GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
     GROQ_MODEL_TEMPERATURE: float = 0.0
 
@@ -64,17 +64,17 @@ class Settings(BaseSettings):
 
     # LangFuse Settings
     LANGFUSE_ENABLED: bool = False
-    LANGFUSE_API_KEY: str | None
+    LANGFUSE_API_KEY: str | None = None
 
     # Database Settings
-    DATABASE_URL: str
+    DATABASE_URL: str = ""
 
     # Metrics settings
     MODEL_COST_PER_1K: float = 0.0
 
     # Supabase settings
-    SUPABASE_URL: str
-    SUPABASE_SERVICE_ROLE_KEY: str
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
 
     # WhatsApp/Twilio settings
     TWILIO_ACCOUNT_SID: str = ""
