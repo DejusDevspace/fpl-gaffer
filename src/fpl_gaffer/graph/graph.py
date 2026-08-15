@@ -1,5 +1,7 @@
+import logging
 from functools import lru_cache
 
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
@@ -16,6 +18,8 @@ from fpl_gaffer.graph.nodes import (
 from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.settings import settings
 from fpl_gaffer.tools import TOOLS
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -51,17 +55,36 @@ _compiled_graph = None
 
 
 async def get_compiled_graph():
-    """Get (or lazily create) the compiled graph with a live Postgres checkpointer.
-    Call once at app startup and reuse — don't call this per-request."""
+    """Get (or lazily create) the compiled graph with a Postgres checkpointer if available,
+    falling back gracefully to MemorySaver if DATABASE_URL is unavailable or fails to connect."""
     global _checkpointer_cm, _compiled_graph
     if _compiled_graph is not None:
         return _compiled_graph
 
-    _checkpointer_cm = AsyncPostgresSaver.from_conn_string(settings.DATABASE_URL)
-    checkpointer = await _checkpointer_cm.__aenter__()
-    await checkpointer.setup()  # creates checkpoint tables if they don't exist yet - idempotent
+    if settings.DATABASE_URL:
+        try:
+            _checkpointer_cm = AsyncPostgresSaver.from_conn_string(settings.DATABASE_URL)
+            checkpointer = await _checkpointer_cm.__aenter__()
+            await checkpointer.setup()  # creates checkpoint tables if they don't exist yet - idempotent
 
-    _compiled_graph = create_workflow_graph().compile(checkpointer=checkpointer)
+            _compiled_graph = create_workflow_graph().compile(checkpointer=checkpointer)
+            logger.info("Successfully initialized Postgres checkpointer.")
+            return _compiled_graph
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize Postgres checkpointer with DATABASE_URL: {e}. "
+                "Falling back to MemorySaver."
+            )
+            if _checkpointer_cm is not None:
+                try:
+                    await _checkpointer_cm.__aexit__(None, None, None)
+                except Exception:
+                    pass
+                _checkpointer_cm = None
+
+    logger.warning("No Postgres checkpointer configured or connection failed. Using MemorySaver fallback.")
+    memory_checkpointer = MemorySaver()
+    _compiled_graph = create_workflow_graph().compile(checkpointer=memory_checkpointer)
     return _compiled_graph
 
 
@@ -69,15 +92,13 @@ async def close_graph():
     """Call on app shutdown to close the checkpointer's connection pool cleanly."""
     global _checkpointer_cm
     if _checkpointer_cm is not None:
-        await _checkpointer_cm.__aexit__(None, None, None)
+        try:
+            await _checkpointer_cm.__aexit__(None, None, None)
+        except Exception as e:
+            logger.warning(f"Error closing checkpointer connection: {e}")
+        _checkpointer_cm = None
 
 
 async def make_graph(config: dict | None = None):
-    """LangGraph CLI / Studio entry point. `langgraph dev` supports pointing at an async factory
-    like this instead of a bare compiled graph, specifically for graphs that need async setup
-    (here: opening the Postgres checkpointer pool) before they're usable. `config` is accepted to
-    match the CLI's expected call signature but isn't used - we don't vary graph construction per
-    request. This just delegates to the same get_compiled_graph() the production app uses, so
-    Studio and Railway are exercising the exact same checkpointer-backed graph, not two different
-    code paths."""
+    """LangGraph CLI / Studio entry point."""
     return await get_compiled_graph()
