@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Dummy values so Settings() can construct without real credentials.
+  # The test suite mocks external calls (FPL API, Tavily, Groq, Supabase) - it doesn't hit them.
+  TAVILY_API_KEY: "ci-dummy"
+  GROQ_API_KEY: "ci-dummy"
+  DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+  SUPABASE_URL: "https://ci-dummy.supabase.co"
+  SUPABASE_SERVICE_ROLE_KEY: "ci-dummy"
+  LANGFUSE_API_KEY: "ci-dummy"
+  LANGFUSE_ENABLED: "false"
+  DEBUG: "false"
+  TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/.tiktoken_cache
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      # uv.lock drift check: fails if pyproject.toml dependencies were changed without
+      # updating uv.lock to match - catches a common source of "works on my machine".
+      - name: Install (locked)
+        run: uv sync --locked
+
+      - name: Cache tiktoken encoding
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TIKTOKEN_CACHE_DIR }}
+          key: tiktoken-cl100k_base
+
+      - name: Run tests
+        run: uv run pytest -q
+
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+
+      - name: Cache tiktoken encoding
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TIKTOKEN_CACHE_DIR }}
+          key: tiktoken-cl100k_base
+
+      - name: Tools registry and graph import cleanly
+        run: |
+          uv run python -c "
+          from fpl_gaffer.tools import TOOLS
+          assert len(TOOLS) > 0, 'TOOLS registry is empty'
+          print(f'{len(TOOLS)} tools loaded:', [t.name for t in TOOLS])
+
+          from fpl_gaffer.graph.graph import create_workflow_graph
+          graph = create_workflow_graph().compile()
+          print('Graph compiled OK')
+          "
+
+      - name: No dead code regressions
+        run: |
+          if grep -rn "tools\.loader\|tools\.executor\|AsyncFPLTool\|AsyncToolExecutor\|FPLNewsProcessor\|MetricCollector" src tests; then
+            echo "Found references to code removed during the harness rewrite - see docs/implementation/"
+            exit 1
+          fi
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Dockerfile exists
+        id: check
+        run: echo "exists=$( [ -f Dockerfile ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.check.outputs.exists == 'true'
+
+      - name: Build image (no push)
+        if: steps.check.outputs.exists == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: fpl-gaffer:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

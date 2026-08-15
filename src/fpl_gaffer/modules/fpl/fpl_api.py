@@ -1,7 +1,9 @@
-from httpx import AsyncClient
 from typing import Dict, Optional
-from fpl_gaffer.settings import settings
+
+from httpx import AsyncClient
+
 from fpl_gaffer.core.exceptions import FPLAPIError
+from fpl_gaffer.settings import settings
 
 
 class FPLOfficialAPIClient:

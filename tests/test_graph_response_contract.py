@@ -40,9 +40,7 @@ class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(chain.received["retry_feedback"], "")
 
     async def test_validation_stores_plain_response_without_reappending_messages(self):
-        chain = _FakeChain(
-            ResponseValidation(validation_passed=True, errors=[], suggestions=[])
-        )
+        chain = _FakeChain(ResponseValidation(validation_passed=True, errors=[], suggestions=[]))
         state = {
             "messages": [
                 HumanMessage(content="How is my team?"),

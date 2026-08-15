@@ -23,12 +23,14 @@ dependencies = [
     "langchain-groq>=0.3.7",
     "langfuse>=4.2.0",
     "langgraph>=0.6.4",
+    "langgraph-checkpoint-postgres>=2.0.0",
     "langgraph-checkpoint-sqlite>=2.0.11",
     "langgraph-cli[inmem]>=0.4.11",
     "lxml-html-clean>=0.4.2",
     "newspaper3k>=0.2.8",
     "passlib>=1.7.4",
     "psycopg2-binary>=2.9.11",
+    "psycopg[binary,pool]>=3.2.0",
     "pydantic>=2.11.7",
     "pyngrok>=7.4.0",
     "python-dotenv>=1.1.1",
@@ -42,5 +44,20 @@ dependencies = [
     "unstructured>=0.18.11",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "ruff>=0.8.0",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]

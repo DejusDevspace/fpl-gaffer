@@ -1,6 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, patch, MagicMock
-from fpl_gaffer.tools import TOOLS
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class ToolFailureIsolationTests(unittest.IsolatedAsyncioTestCase):
@@ -16,9 +15,7 @@ class ToolFailureIsolationTests(unittest.IsolatedAsyncioTestCase):
             "fpl_gaffer.tools.fpl.FPLDataManager",
         ) as mock_dm_cls:
             mock_dm = MagicMock()
-            mock_dm.get_players_by_position = AsyncMock(
-                side_effect=RuntimeError("boom")
-            )
+            mock_dm.get_players_by_position = AsyncMock(side_effect=RuntimeError("boom"))
             mock_dm_cls.return_value = mock_dm
 
             result = await get_players_by_position("MID", 10.0)
@@ -37,9 +34,7 @@ class ToolFailureIsolationTests(unittest.IsolatedAsyncioTestCase):
             "fpl_gaffer.tools.fpl.FPLDataManager",
         ) as mock_dm_cls:
             mock_dm = MagicMock()
-            mock_dm.get_player_data = AsyncMock(
-                side_effect=ValueError("player not found")
-            )
+            mock_dm.get_player_data = AsyncMock(side_effect=ValueError("player not found"))
             mock_dm_cls.return_value = mock_dm
 
             result = await get_player_data(["Nonexistent Player"])

@@ -1,7 +1,9 @@
 from typing import Dict
-from pydantic import BaseModel, Field
+
 from langchain_core.tools import tool
-from fpl_gaffer.modules import FPLTeamDataManger, FPLOfficialAPIClient
+from pydantic import BaseModel, Field
+
+from fpl_gaffer.modules import FPLOfficialAPIClient, FPLTeamDataManger
 from fpl_gaffer.settings import settings
 
 

@@ -10,13 +10,13 @@ from fpl_gaffer.integrations.api.app.utils.schemas import (
     PhoneVerificationRequest,
     PhoneVerificationResponse,
     TeamVerificationRequest,
-    TeamVerificationResponse
+    TeamVerificationResponse,
 )
 from fpl_gaffer.modules.fpl import FPLOfficialAPIClient
 from fpl_gaffer.modules.user import FPLUserProfileManager
 
-
 router = APIRouter(prefix="/api/onboarding", tags=["onboarding"])
+
 
 @router.post("/verify-team", response_model=TeamVerificationResponse)
 async def verify_team(

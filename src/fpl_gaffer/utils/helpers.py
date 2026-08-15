@@ -1,5 +1,7 @@
 from langchain_groq import ChatGroq
+
 from fpl_gaffer.settings import settings
+
 
 def get_chat_model() -> ChatGroq:
     """Initialize and return a ChatGroq model instance."""

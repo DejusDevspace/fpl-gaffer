@@ -1,6 +1,7 @@
-from typing import Dict, Any, List, Optional
 import datetime as dt
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from fpl_gaffer.integrations.api.app.services.supabase import supabase_client
 from fpl_gaffer.integrations.api.app.utils.logger import logger
 
@@ -36,7 +37,7 @@ class FPLService:
                 "player_last_name": team_data.get("player_last_name"),
                 "years_active": team_data.get("years_active"),  # added
                 "favourite_team": team_data.get("favourite_team"),  # added
-                "started_event": team_data.get("started_event"),   # added
+                "started_event": team_data.get("started_event"),  # added
                 "overall_rank": team_data.get("summary_overall_rank"),
                 "overall_points": team_data.get("summary_overall_points"),
                 "current_gameweek": team_data.get("current_event"),
@@ -71,24 +72,28 @@ class FPLService:
         try:
             records = []
             for gw in history_data.get("current"):
-                records.append({
-                    "fpl_team_id": fpl_team_id,
-                    "gameweek": gw["event"],
-                    "points": gw["points"],
-                    "total_points": gw["total_points"],
-                    "rank": gw.get("rank"),
-                    "rank_sort": gw.get("rank_sort"),  # added
-                    "overall_rank": gw.get("overall_rank"),
-                    "percentile_rank": gw.get("percentile_rank"),
-                    "bank": gw.get("bank"),
-                    "team_value": gw.get("value"),
-                    "event_transfers": gw.get("event_transfers", 0),
-                    "event_transfers_cost": gw.get("event_transfers_cost", 0),
-                    "points_on_bench": gw.get("points_on_bench", 0),
-                })
+                records.append(
+                    {
+                        "fpl_team_id": fpl_team_id,
+                        "gameweek": gw["event"],
+                        "points": gw["points"],
+                        "total_points": gw["total_points"],
+                        "rank": gw.get("rank"),
+                        "rank_sort": gw.get("rank_sort"),  # added
+                        "overall_rank": gw.get("overall_rank"),
+                        "percentile_rank": gw.get("percentile_rank"),
+                        "bank": gw.get("bank"),
+                        "team_value": gw.get("value"),
+                        "event_transfers": gw.get("event_transfers", 0),
+                        "event_transfers_cost": gw.get("event_transfers_cost", 0),
+                        "points_on_bench": gw.get("points_on_bench", 0),
+                    }
+                )
 
             # Batch upsert
-            self.client.table("gameweek_history").upsert(records, on_conflict="fpl_team_id,gameweek").execute()
+            self.client.table("gameweek_history").upsert(
+                records, on_conflict="fpl_team_id,gameweek"
+            ).execute()
             logger.info(f"Synced {len(records)} gameweek records for team {fpl_team_id}")
             return True
 
@@ -110,17 +115,19 @@ class FPLService:
         try:
             records = []
             for transfer in transfers_data:
-                records.append({
-                    "fpl_team_id": fpl_team_id,
-                    "gameweek": transfer["gameweek"],
-                    "time": transfer.get("time"),
-                    "player_in_id": transfer.get("player_in_id"),
-                    "player_in_name": transfer.get("player_in_name"),
-                    "player_in_cost": transfer.get("player_in_cost"),
-                    "player_out_id": transfer.get("player_out_id"),
-                    "player_out_name": transfer.get("player_out_name"),
-                    "player_out_cost": transfer.get("player_out_cost"),
-                })
+                records.append(
+                    {
+                        "fpl_team_id": fpl_team_id,
+                        "gameweek": transfer["gameweek"],
+                        "time": transfer.get("time"),
+                        "player_in_id": transfer.get("player_in_id"),
+                        "player_in_name": transfer.get("player_in_name"),
+                        "player_in_cost": transfer.get("player_in_cost"),
+                        "player_out_id": transfer.get("player_out_id"),
+                        "player_out_name": transfer.get("player_out_name"),
+                        "player_out_cost": transfer.get("player_out_cost"),
+                    }
+                )
 
             # Clear existing and insert new
             self.client.table("transfer_history").delete().eq("fpl_team_id", fpl_team_id).execute()
@@ -149,13 +156,15 @@ class FPLService:
         try:
             records = []
             for pick in captains_data:
-                records.append({
-                    "fpl_team_id": fpl_team_id,
-                    "gameweek": pick["gameweek"],
-                    "player_id": pick.get("player_id"),
-                    "player_name": pick.get("player_name"),
-                    "is_vice_captain": pick.get("is_vice_captain", False),
-                })
+                records.append(
+                    {
+                        "fpl_team_id": fpl_team_id,
+                        "gameweek": pick["gameweek"],
+                        "player_id": pick.get("player_id"),
+                        "player_name": pick.get("player_name"),
+                        "is_vice_captain": pick.get("is_vice_captain", False),
+                    }
+                )
 
             # Clear existing and insert new
             self.client.table("captain_picks").delete().eq("fpl_team_id", fpl_team_id).execute()
@@ -221,33 +230,41 @@ class FPLService:
             current_gw = fpl_team["current_gameweek"]
 
             # Get current gameweek data
-            current_gw_data = self.client.table("gameweek_history") \
-                .select("*") \
-                .eq("fpl_team_id", fpl_team_id) \
-                .eq("gameweek", current_gw) \
+            current_gw_data = (
+                self.client.table("gameweek_history")
+                .select("*")
+                .eq("fpl_team_id", fpl_team_id)
+                .eq("gameweek", current_gw)
                 .execute()
+            )
 
             # Get all gameweek history
-            gw_history = self.client.table("gameweek_history") \
-                .select("*") \
-                .eq("fpl_team_id", fpl_team_id) \
-                .order("gameweek") \
+            gw_history = (
+                self.client.table("gameweek_history")
+                .select("*")
+                .eq("fpl_team_id", fpl_team_id)
+                .order("gameweek")
                 .execute()
+            )
 
             # Get transfer history
-            transfers = self.client.table("transfer_history") \
-                .select("*") \
-                .eq("fpl_team_id", fpl_team_id) \
-                .order("gameweek") \
+            transfers = (
+                self.client.table("transfer_history")
+                .select("*")
+                .eq("fpl_team_id", fpl_team_id)
+                .order("gameweek")
                 .execute()
+            )
 
             # Get current captain
-            captain = self.client.table("captain_picks") \
-                .select("*") \
-                .eq("fpl_team_id", fpl_team_id) \
-                .eq("gameweek", current_gw) \
-                .eq("is_vice_captain", False) \
+            captain = (
+                self.client.table("captain_picks")
+                .select("*")
+                .eq("fpl_team_id", fpl_team_id)
+                .eq("gameweek", current_gw)
+                .eq("is_vice_captain", False)
                 .execute()
+            )
 
             return {
                 "team": fpl_team,
@@ -277,29 +294,33 @@ class FPLService:
 
             # Process classic leagues
             for league in leagues_data.get("classic", []):
-                records.append({
-                    "fpl_team_id": fpl_team_id,
-                    "league_id": league.get("id"),
-                    "league_name": league.get("name"),
-                    "league_type": "classic",
-                    "created": league.get("created"),
-                    "start_event": league.get("start_event"),
-                    "entry_rank": league.get("entry_rank"),
-                    "entry_last_rank": league.get("entry_last_rank"),
-                })
+                records.append(
+                    {
+                        "fpl_team_id": fpl_team_id,
+                        "league_id": league.get("id"),
+                        "league_name": league.get("name"),
+                        "league_type": "classic",
+                        "created": league.get("created"),
+                        "start_event": league.get("start_event"),
+                        "entry_rank": league.get("entry_rank"),
+                        "entry_last_rank": league.get("entry_last_rank"),
+                    }
+                )
 
             # Process h2h leagues
             for league in leagues_data.get("h2h", []):
-                records.append({
-                    "fpl_team_id": fpl_team_id,
-                    "league_id": league.get("id"),
-                    "league_name": league.get("name"),
-                    "league_type": "h2h",
-                    "created": league.get("created"),
-                    "start_event": league.get("start_event"),
-                    "entry_rank": league.get("entry_rank"),
-                    "entry_last_rank": league.get("entry_last_rank"),
-                })
+                records.append(
+                    {
+                        "fpl_team_id": fpl_team_id,
+                        "league_id": league.get("id"),
+                        "league_name": league.get("name"),
+                        "league_type": "h2h",
+                        "created": league.get("created"),
+                        "start_event": league.get("start_event"),
+                        "entry_rank": league.get("entry_rank"),
+                        "entry_last_rank": league.get("entry_last_rank"),
+                    }
+                )
 
             # Clear existing and insert new
             self.client.table("user_leagues").delete().eq("fpl_team_id", fpl_team_id).execute()
@@ -325,10 +346,7 @@ class FPLService:
             fpl_team_id = fpl_team["id"]
 
             # Get leagues from database
-            result = self.client.table("user_leagues") \
-                .select("*") \
-                .eq("fpl_team_id", fpl_team_id) \
-                .execute()
+            result = self.client.table("user_leagues").select("*").eq("fpl_team_id", fpl_team_id).execute()
 
             # Filter into classic and h2h based on league_type
             classic_leagues = [league for league in result.data if league.get("league_type") == "classic"]

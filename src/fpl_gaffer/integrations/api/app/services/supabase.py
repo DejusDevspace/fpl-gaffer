@@ -1,10 +1,12 @@
-from supabase import create_client, Client
-from fpl_gaffer.settings import settings
-from fpl_gaffer.integrations.api.app.utils.logger import logger
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 import httpx
-from jose import jwt, jwk
+from jose import jwk, jwt
 from jose.exceptions import JWTError
+from supabase import Client, create_client
+
+from fpl_gaffer.integrations.api.app.utils.logger import logger
+from fpl_gaffer.settings import settings
 
 
 class SupabaseClient:
@@ -17,10 +19,7 @@ class SupabaseClient:
         self.SUPABASE_URL = settings.SUPABASE_URL
         self.SUPABASE_SERVICE_ROLE_KEY = settings.SUPABASE_SERVICE_ROLE_KEY
 
-        self.client: Client = create_client(
-            self.SUPABASE_URL,
-            self.SUPABASE_SERVICE_ROLE_KEY
-        )
+        self.client: Client = create_client(self.SUPABASE_URL, self.SUPABASE_SERVICE_ROLE_KEY)
 
         self._jwks_cache: Optional[Dict[str, Any]] = None
         self.http_client = httpx.AsyncClient()
@@ -81,7 +80,7 @@ class SupabaseClient:
                 public_key,
                 algorithms=["RS256", "ES256", "EdDSA"],  # Support multiple asymmetric algorithms
                 audience="authenticated",  # Supabase default audience
-                options={"verify_aud": True, "verify_exp": True}
+                options={"verify_aud": True, "verify_exp": True},
             )
 
             logger.info(f"JWT verified successfully for user {decoded.get('sub')}")

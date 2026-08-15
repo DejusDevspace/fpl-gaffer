@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Body, Query, Path
 from typing import Dict
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+
 from fpl_gaffer.integrations.api.app.middleware.auth import require_auth
-from fpl_gaffer.integrations.api.app.utils.schemas import (
-    LinkFPLRequest, SyncFPLRequest, DashboardResponse, LeaguesResponse, LeagueStandingsRequest
-)
-from fpl_gaffer.modules.fpl import FPLOfficialAPIClient
-from fpl_gaffer.modules.user import FPLUserProfileManager, FPLTeamDataManger
 from fpl_gaffer.integrations.api.app.services.fpl import fpl_service
 from fpl_gaffer.integrations.api.app.utils.logger import logger
-
+from fpl_gaffer.integrations.api.app.utils.schemas import (
+    DashboardResponse,
+    LeaguesResponse,
+    LinkFPLRequest,
+    SyncFPLRequest,
+)
+from fpl_gaffer.modules.fpl import FPLOfficialAPIClient
+from fpl_gaffer.modules.user import FPLTeamDataManger, FPLUserProfileManager
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
@@ -33,20 +37,12 @@ async def link_fpl_team(
     profile_manager = FPLUserProfileManager(api, request.fpl_id)
     user_data = await profile_manager.extract_user_data(mode="api")
 
-    fpl_team_id = await fpl_service.link_fpl_team(
-        user_id=user_id,
-        fpl_id=request.fpl_id,
-        team_data=user_data
-    )
+    fpl_team_id = await fpl_service.link_fpl_team(user_id=user_id, fpl_id=request.fpl_id, team_data=user_data)
 
     if not fpl_team_id:
         raise HTTPException(status_code=500, detail="Failed to link FPL team")
 
-    return {
-        "status": "success",
-        "message": "FPL team linked successfully",
-        "fpl_team_id": fpl_team_id
-    }
+    return {"status": "success", "message": "FPL team linked successfully", "fpl_team_id": fpl_team_id}
 
 
 @router.post("/sync-fpl")
@@ -77,7 +73,7 @@ async def sync_fpl_data(
     if fpl_id != request.fpl_id:
         raise HTTPException(
             status_code=404,
-            detail="FPL ID does not match linked FPL team. Please link team or use correct FPL ID."
+            detail="FPL ID does not match linked FPL team. Please link team or use correct FPL ID.",
         )
 
     # Get team, gw history, transfer history, and captain picks data
@@ -119,10 +115,7 @@ async def sync_fpl_data(
 
     logger.info(f"FPL data synced for user {user_id}")
 
-    return {
-        "status": "success",
-        "message": "FPL data synced successfully"
-    }
+    return {"status": "success", "message": "FPL data synced successfully"}
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
@@ -137,16 +130,14 @@ async def get_dashboard(
     if not dashboard_data:
         raise HTTPException(
             status_code=404,
-            detail="FPL team not linked or no data available. Please link your FPL team and sync data."
+            detail="FPL team not linked or no data available. Please link your FPL team and sync data.",
         )
 
     return DashboardResponse(**dashboard_data)
 
 
 @router.get("/leagues", response_model=LeaguesResponse)
-async def get_leagues(
-    current_user: Dict = Depends(require_auth)
-):
+async def get_leagues(current_user: Dict = Depends(require_auth)):
     """Get all leagues for authenticated user."""
     user_id = current_user["sub"]
 
@@ -154,10 +145,7 @@ async def get_leagues(
     leagues_data = await fpl_service.get_user_leagues(user_id)
 
     if leagues_data is None:
-        raise HTTPException(
-            status_code=404,
-            detail="FPL team not linked. Please link your FPL team first."
-        )
+        raise HTTPException(status_code=404, detail="FPL team not linked. Please link your FPL team first.")
 
     return LeaguesResponse(**leagues_data)
 
@@ -167,7 +155,7 @@ async def get_classic_league_standings(
     # request: LeagueStandingsRequest,
     league_id: int = Path(...),
     page: int = Query(1, ge=1),
-    current_user: Dict = Depends(require_auth)
+    current_user: Dict = Depends(require_auth),
 ):
     """
     Get the standings for a specific league.
@@ -192,15 +180,9 @@ async def get_classic_league_standings(
         standings = await data_manager.get_league_standings(league_id, page)
 
     if not standings:
-        raise HTTPException(
-            status_code=404,
-            detail="League not found."
-        )
+        raise HTTPException(status_code=404, detail="League not found.")
 
-    return {
-        "status": "success",
-        "standings": standings
-    }
+    return {"status": "success", "standings": standings}
 
 
 @router.get("/fpl-team")

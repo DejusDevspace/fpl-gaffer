@@ -1,6 +1,5 @@
-from typing import List, Tuple, Dict, Literal
+from typing import Dict, List, Literal, Tuple
 
-from fpl_gaffer.core.exceptions import FPLAPIError
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.utils import build_mappings
 
@@ -27,7 +26,7 @@ class FPLDataManager:
             return {
                 "gameweek": next_gw.get("id") if next_gw else None,
                 "deadline": next_gw.get("deadline_time") if next_gw else None,
-                "fixtures": None
+                "fixtures": None,
             }
 
         # Get fixtures for the current gameweek
@@ -41,19 +40,21 @@ class FPLDataManager:
         if next_gw:
             for fixture in fixtures:
                 if fixture.get("event") == next_gw.get("id"):
-                    next_gw_fixtures.append({
-                        "id": fixture.get("id"),
-                        "home_team": teams.get(fixture.get("team_h"), "Unknown"),
-                        "away_team": teams.get(fixture.get("team_a"), "Unknown"),
-                        "home_team_difficulty": fixture.get("team_h_difficulty", 0),
-                        "away_team_difficulty": fixture.get("team_a_difficulty", 0),
-                        "kickoff_time": fixture.get("kickoff_time"),
-                    })
+                    next_gw_fixtures.append(
+                        {
+                            "id": fixture.get("id"),
+                            "home_team": teams.get(fixture.get("team_h"), "Unknown"),
+                            "away_team": teams.get(fixture.get("team_a"), "Unknown"),
+                            "home_team_difficulty": fixture.get("team_h_difficulty", 0),
+                            "away_team_difficulty": fixture.get("team_a_difficulty", 0),
+                            "kickoff_time": fixture.get("kickoff_time"),
+                        }
+                    )
 
         return {
             "gameweek": next_gw.get("id") if next_gw else None,
             "deadline": next_gw.get("deadline_time") if next_gw else None,
-            "fixtures": next_gw_fixtures
+            "fixtures": next_gw_fixtures,
         }
 
     async def get_fixtures_for_range(self, num_gameweeks: int = 1) -> Dict:
@@ -79,15 +80,17 @@ class FPLDataManager:
         upcoming_fixtures = []
         for fixture in all_fixtures:
             if fixture.get("event") in target_gws:
-                upcoming_fixtures.append({
-                    "id": fixture.get("id"),
-                    "gameweek": fixture.get("event"),
-                    "home_team": teams.get(fixture.get("team_h"), "Unknown"),
-                    "away_team": teams.get(fixture.get("team_a"), "Unknown"),
-                    "home_team_difficulty": fixture.get("team_h_difficulty"),
-                    "away_team_difficulty": fixture.get("team_a_difficulty"),
-                    "kickoff_time": fixture.get("kickoff_time"),
-                })
+                upcoming_fixtures.append(
+                    {
+                        "id": fixture.get("id"),
+                        "gameweek": fixture.get("event"),
+                        "home_team": teams.get(fixture.get("team_h"), "Unknown"),
+                        "away_team": teams.get(fixture.get("team_a"), "Unknown"),
+                        "home_team_difficulty": fixture.get("team_h_difficulty"),
+                        "away_team_difficulty": fixture.get("team_a_difficulty"),
+                        "kickoff_time": fixture.get("kickoff_time"),
+                    }
+                )
 
         return {
             "from_gameweek": start_gw,
@@ -95,7 +98,7 @@ class FPLDataManager:
             "requested_gameweeks": requested_gameweeks,
             "capped_at_gameweeks": MAX_FIXTURE_GAMEWEEKS,
             "truncated": requested_gameweeks > num_gameweeks,
-            "fixtures": upcoming_fixtures
+            "fixtures": upcoming_fixtures,
         }
 
     @staticmethod
@@ -146,6 +149,7 @@ class FPLDataManager:
     @staticmethod
     def _player_sort_key(player: Dict) -> tuple:
         """Sort transfer candidates by stable, useful launch-time signals."""
+
         def as_float(value, default: float = 0.0) -> float:
             try:
                 return float(value)
@@ -160,9 +164,7 @@ class FPLDataManager:
         )
 
     async def get_players_by_position(
-        self,
-        position: Literal["GKP", "DEF", "MID", "FWD"],
-        max_price: float
+        self, position: Literal["GKP", "DEF", "MID", "FWD"], max_price: float
     ) -> Dict:
         """Get players by position and max price."""
         # Get bootstrap data
@@ -175,17 +177,16 @@ class FPLDataManager:
         players, teams, positions = build_mappings(bootstrap_data)
 
         # Find position ID from position short name
-        position_id = next((
-            pid for pid, pname in positions.items() if pname.lower() == position.lower()
-        ), None)
+        position_id = next(
+            (pid for pid, pname in positions.items() if pname.lower() == position.lower()), None
+        )
 
         if position_id is None:
             return {}
 
         matched_players = []
         for player in bootstrap_data.get("elements", []):
-            if (player.get("element_type") == position_id and
-                    (player.get("now_cost", 0) / 10) <= max_price):
+            if player.get("element_type") == position_id and (player.get("now_cost", 0) / 10) <= max_price:
                 matched_players.append(self._compact_player(player, teams, positions))
 
         matched_players.sort(key=self._player_sort_key, reverse=True)
@@ -262,19 +263,19 @@ class FPLDataManager:
                 for gw in history
             ]
 
-            players_form.append({
-                **compact,
-                "gameweeks_analyzed": len(recent),
-                "recent_gameweeks": recent,
-            })
+            players_form.append(
+                {
+                    **compact,
+                    "gameweeks_analyzed": len(recent),
+                    "recent_gameweeks": recent,
+                }
+            )
 
         return {
             "requested_gameweeks": num_gameweeks,
             "players": players_form,
             "not_found": [
-                n for n in player_names if n.lower() not in {
-                    p.get("web_name", "").lower() for p in matched
-                }
+                n for n in player_names if n.lower() not in {p.get("web_name", "").lower() for p in matched}
             ],
         }
 
@@ -315,20 +316,20 @@ class FPLDataManager:
             else:
                 avg_points, avg_minutes = None, None
 
-            comparison.append({
-                **compact,
-                "form_window_gameweeks": len(history),
-                "avg_points_recent": avg_points,
-                "avg_minutes_recent": avg_minutes,
-            })
+            comparison.append(
+                {
+                    **compact,
+                    "form_window_gameweeks": len(history),
+                    "avg_points_recent": avg_points,
+                    "avg_minutes_recent": avg_minutes,
+                }
+            )
 
         return {
             "compared": len(comparison),
             "players": comparison,
             "not_found": [
-                n for n in player_names if n.lower() not in {
-                    p.get("web_name", "").lower() for p in matched
-                }
+                n for n in player_names if n.lower() not in {p.get("web_name", "").lower() for p in matched}
             ],
         }
 
@@ -366,12 +367,14 @@ class FPLDataManager:
         movers = []
         for p in selected:
             compact = self._compact_player(p, teams, positions)
-            movers.append({
-                **compact,
-                "price_change_this_event": change(p) / 10,
-                "transfers_in_event": p.get("transfers_in_event"),
-                "transfers_out_event": p.get("transfers_out_event"),
-            })
+            movers.append(
+                {
+                    **compact,
+                    "price_change_this_event": change(p) / 10,
+                    "transfers_in_event": p.get("transfers_in_event"),
+                    "transfers_out_event": p.get("transfers_out_event"),
+                }
+            )
 
         return {
             "direction": direction,
@@ -399,9 +402,9 @@ class FPLDataManager:
             return {}
 
         players, teams, positions = build_mappings(bootstrap_data)
-        position_id = next((
-            pid for pid, pname in positions.items() if pname.lower() == position.lower()
-        ), None)
+        position_id = next(
+            (pid for pid, pname in positions.items() if pname.lower() == position.lower()), None
+        )
         if position_id is None:
             return {}
 
@@ -449,8 +452,6 @@ class FPLDataManager:
         _, teams, _ = build_mappings(bootstrap_data)
 
         # Get next gameweek from bootstrap data
-        next_gw = (next((
-            gw for gw in bootstrap_data.get("events", []) if gw.get("is_next")
-        ), None))
+        next_gw = next((gw for gw in bootstrap_data.get("events", []) if gw.get("is_next")), None)
 
         return bootstrap_data, teams, next_gw

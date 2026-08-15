@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from fpl_gaffer.integrations.api.app.utils.schemas import ChatRequest, ChatResponse
-from fpl_gaffer.integrations.api.app.services.agent_wrapper import agent_wrapper
-from fpl_gaffer.integrations.api.app.services.database import database_service
-from fpl_gaffer.integrations.api.app.middleware.auth import get_current_user
-from fpl_gaffer.integrations.api.app.utils.logger import logger
-from uuid import uuid4
 from typing import Optional
+from uuid import uuid4
 
+from fastapi import APIRouter, Depends, HTTPException
+
+from fpl_gaffer.integrations.api.app.middleware.auth import get_current_user
+from fpl_gaffer.integrations.api.app.services.agent_wrapper import agent_wrapper
+from fpl_gaffer.integrations.api.app.utils.schemas import ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -29,7 +27,7 @@ async def chat(
         meta={
             "request_id": request_id,
             "route": "/api/chat",
-        }
+        },
     )
 
     if result["status"] == "error":

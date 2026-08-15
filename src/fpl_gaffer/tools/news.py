@@ -1,6 +1,8 @@
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
+
 from fpl_gaffer.modules import FPLNewsSearchClient
 from fpl_gaffer.settings import settings
 
@@ -13,7 +15,7 @@ class ExpertTipsInput(BaseModel):
     query: str = Field(
         ...,
         description="What to look for expert/scout takes on, e.g. 'gameweek 5 captaincy picks', "
-                    "'best differentials this week', 'wildcard team ideas'.",
+        "'best differentials this week', 'wildcard team ideas'.",
     )
 
 
@@ -21,14 +23,16 @@ def compact_news_results(query: str, results: Dict[str, Any], limit: int = 3) ->
     """Return a small news digest suitable for the agent context."""
     compact_results = []
     for result in results.get("results", [])[:limit]:
-        compact_results.append({
-            "title": result.get("title"),
-            "url": result.get("url"),
-            "source": result.get("source"),
-            "published_date": result.get("published_date"),
-            "snippet": (result.get("content") or "")[:500],
-            "score": result.get("score"),
-        })
+        compact_results.append(
+            {
+                "title": result.get("title"),
+                "url": result.get("url"),
+                "source": result.get("source"),
+                "published_date": result.get("published_date"),
+                "snippet": (result.get("content") or "")[:500],
+                "score": result.get("score"),
+            }
+        )
 
     return {
         "query": query,

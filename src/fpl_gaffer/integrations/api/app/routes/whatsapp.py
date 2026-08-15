@@ -4,7 +4,6 @@ from fastapi.responses import Response
 from fpl_gaffer.integrations.api.app.services.whatsapp import whatsapp_service
 from fpl_gaffer.integrations.api.app.utils.logger import logger
 
-
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
 
 

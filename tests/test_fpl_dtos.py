@@ -89,10 +89,7 @@ class FPLDtoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(api.fixtures_calls, 0)
 
     async def test_players_by_position_returns_capped_compact_sorted_envelope(self):
-        players = [
-            _player(i, f"Mid{i}", 3, 1, 50, total_points=i, form=str(i / 10))
-            for i in range(1, 11)
-        ]
+        players = [_player(i, f"Mid{i}", 3, 1, 50, total_points=i, form=str(i / 10)) for i in range(1, 11)]
         manager = FPLDataManager(_FakeFPLApi(_bootstrap_data(players)))
 
         result = await manager.get_players_by_position("MID", 10.0)
