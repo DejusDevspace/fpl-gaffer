@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "gaffer": "./src/fpl_gaffer/graph/graph.py:graph"
+    "gaffer": "./src/fpl_gaffer/graph/graph.py:make_graph"
   },
   "env": ".env",
   "python_version": "3.13"
