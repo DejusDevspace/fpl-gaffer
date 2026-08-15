@@ -1,14 +1,14 @@
-from typing import Literal, List, Dict
-from pydantic import BaseModel, Field
+from typing import Dict, List, Literal
+
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
+
 from fpl_gaffer.modules import FPLDataManager, FPLOfficialAPIClient
 from fpl_gaffer.settings import settings
 
 
 class PlayerByPositionInput(BaseModel):
-    position: Literal["GKP", "DEF", "MID", "FWD"] = Field(
-        ..., description="Position to search for."
-    )
+    position: Literal["GKP", "DEF", "MID", "FWD"] = Field(..., description="Position to search for.")
     max_price: float = Field(16.0, description="Maximum player price to search for, in millions.")
 
 
@@ -29,9 +29,7 @@ class PlayerFormInput(BaseModel):
 
 
 class ComparePlayersInput(BaseModel):
-    player_names: List[str] = Field(
-        ..., description="2-5 player names to compare head to head."
-    )
+    player_names: List[str] = Field(..., description="2-5 player names to compare head to head.")
     num_gameweeks_form: int = Field(
         5, description="How many recent gameweeks to use for the form-average part of the comparison."
     )
@@ -53,10 +51,7 @@ class DifferentialCandidatesInput(BaseModel):
     min_form: float = Field(3.0, description="Only include players with at least this form score.")
 
 
-async def get_players_by_position(
-    position:  Literal["GKP", "DEF", "MID", "FWD"],
-    max_price: float
-) -> Dict:
+async def get_players_by_position(position: Literal["GKP", "DEF", "MID", "FWD"], max_price: float) -> Dict:
     """Implementation for get_players_by_position_tool. Kept importable for tests."""
     try:
         data_manager = FPLDataManager(FPLOfficialAPIClient())
@@ -111,10 +106,10 @@ async def get_price_movers(direction: Literal["rising", "falling"], limit: int) 
 
 
 async def get_differential_candidates(
-    position:  Literal["GKP", "DEF", "MID", "FWD"],
+    position: Literal["GKP", "DEF", "MID", "FWD"],
     max_price: float,
     max_ownership_percent: float,
-    min_form: float
+    min_form: float,
 ) -> Dict:
     """Implementation for get_differential_candidates_tool. Kept importable for tests."""
     try:
@@ -128,7 +123,7 @@ async def get_differential_candidates(
 
 @tool("get_players_by_position_tool", args_schema=PlayerByPositionInput)
 async def get_players_by_position_tool(
-    position:  Literal["GKP", "DEF", "MID", "FWD"], max_price: float
+    position: Literal["GKP", "DEF", "MID", "FWD"], max_price: float
 ) -> Dict:
     """Get players by position and max price, sorted by points/form/ownership. Use this for
     transfer replacement ideas when you know the position and budget but not specific names."""
@@ -175,10 +170,10 @@ async def get_price_movers_tool(direction: Literal["rising", "falling"], limit: 
 
 @tool("get_differential_candidates_tool", args_schema=DifferentialCandidatesInput)
 async def get_differential_candidates_tool(
-    position:  Literal["GKP", "DEF", "MID", "FWD"],
+    position: Literal["GKP", "DEF", "MID", "FWD"],
     max_price: float,
     max_ownership_percent: float,
-    min_form: float
+    min_form: float,
 ) -> Dict:
     """Find low-ownership players with strong current numbers for a position and budget - pure
     stats-based differential candidates, not sourced from expert/scout content. Use this when

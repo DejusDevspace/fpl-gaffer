@@ -1,18 +1,20 @@
 import json
 import logging
 from typing import Dict
+
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, ToolMessage
-from fpl_gaffer.graph.state import WorkflowState
-from fpl_gaffer.modules import (
-    FPLOfficialAPIClient, FPLUserProfileManager, FPLDataManager
-)
+
+from fpl_gaffer.core.limits import DEFAULT_LIMITS, resolve_limits
 from fpl_gaffer.core.prompts import (
-    FPL_GAFFER_SYSTEM_PROMPT, RESPONSE_VALIDATION_PROMPT, RESPONSE_RETRY_PROMPT
+    FPL_GAFFER_SYSTEM_PROMPT,
+    RESPONSE_RETRY_PROMPT,
+    RESPONSE_VALIDATION_PROMPT,
 )
-from fpl_gaffer.core.limits import resolve_limits, DEFAULT_LIMITS
+from fpl_gaffer.graph.state import WorkflowState
+from fpl_gaffer.modules import FPLDataManager, FPLOfficialAPIClient, FPLUserProfileManager
+from fpl_gaffer.settings import settings
 from fpl_gaffer.utils.chains import get_agent_chain, get_response_validation_chain
 from fpl_gaffer.utils.helpers import get_chat_model
-from fpl_gaffer.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +41,14 @@ async def context_injection_node(state: WorkflowState) -> Dict:
     if not fpl_id or state.get("user_data", None) is None:
         if not fpl_id:
             if settings.DEBUG:
-                logger.warning("No user_id in graph state; falling back to settings.FPL_MANAGER_ID (DEBUG mode)")
+                logger.warning(
+                    "No user_id in graph state; falling back to settings.FPL_MANAGER_ID (DEBUG mode)"
+                )
                 fpl_id = int(settings.FPL_MANAGER_ID)
             else:
-                raise ValueError("No FPL user ID provided and DEBUG mode is off — cannot fall back to default.")
+                raise ValueError(
+                    "No FPL user ID provided and DEBUG mode is off — cannot fall back to default."
+                )
 
         api = FPLOfficialAPIClient()
         profile_manager = FPLUserProfileManager(api, fpl_id)
@@ -51,12 +57,14 @@ async def context_injection_node(state: WorkflowState) -> Dict:
         data_manager = FPLDataManager(api)
         gw_data = await data_manager.get_gameweek_data(include_fixtures=False)
 
-        result.update({
-            "user_id": fpl_id,
-            "user_data": user_data,
-            "gameweek_data": gw_data,
-            "is_retry": False,
-        })
+        result.update(
+            {
+                "user_id": fpl_id,
+                "user_data": user_data,
+                "gameweek_data": gw_data,
+                "is_retry": False,
+            }
+        )
 
     return result
 
@@ -98,20 +106,19 @@ async def agent_node(state: WorkflowState) -> Dict:
     if budget_exceeded:
         retry_feedback += BUDGET_EXCEEDED_NOTE
 
-    chain = get_agent_chain(
-        FPL_GAFFER_SYSTEM_PROMPT,
-        bind_tools=not budget_exceeded
-    )
+    chain = get_agent_chain(FPL_GAFFER_SYSTEM_PROMPT, bind_tools=not budget_exceeded)
 
-    response = await chain.ainvoke({
-        "messages": state["messages"],
-        "user_id": state["user_id"],
-        "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
-        "team_name": state["user_data"].get("team_name", "Unknown"),
-        "total_points": state["user_data"].get("total_points", "N/A"),
-        "overall_rank": state["user_data"].get("overall_rank", "N/A"),
-        "retry_feedback": retry_feedback,
-    })
+    response = await chain.ainvoke(
+        {
+            "messages": state["messages"],
+            "user_id": state["user_id"],
+            "gameweek_number": state["gameweek_data"].get("gameweek", "N/A"),
+            "team_name": state["user_data"].get("team_name", "Unknown"),
+            "total_points": state["user_data"].get("total_points", "N/A"),
+            "overall_rank": state["user_data"].get("overall_rank", "N/A"),
+            "retry_feedback": retry_feedback,
+        }
+    )
 
     usage = _extract_token_usage(response)
     model_name = (response.response_metadata or {}).get("model_name", settings.GROQ_MODEL_NAME)
@@ -149,7 +156,7 @@ async def summarize_conversation_node(state: WorkflowState) -> Dict:
     messages = state["messages"] + [HumanMessage(content=summary_message)]
     response = await model.ainvoke(messages)
 
-    delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-settings.MESSAGES_AFTER_SUMMARY]]
+    delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][: -settings.MESSAGES_AFTER_SUMMARY]]
     return {"summary": response.content, "messages": delete_messages}
 
 
@@ -203,11 +210,13 @@ async def response_validation_node(state: WorkflowState) -> Dict:
     turn_context = state["messages"][turn_start:-1]
 
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
-    response = await chain.ainvoke({
-        "context": turn_context,
-        "user_info": json.dumps(user_info, indent=2),
-        "generated_response": final_message.content,
-    })
+    response = await chain.ainvoke(
+        {
+            "context": turn_context,
+            "user_info": json.dumps(user_info, indent=2),
+            "generated_response": final_message.content,
+        }
+    )
 
     logger.debug("Validation response: %s", response)
 
@@ -235,7 +244,7 @@ async def compact_turn_node(state: WorkflowState) -> Dict:
     tool result gets resent on every future turn until the message-count summarizer eventually
     catches up."""
     turn_start = _last_human_message_index(state["messages"])
-    turn_messages = state["messages"][turn_start + 1:]
+    turn_messages = state["messages"][turn_start + 1 :]
 
     to_remove = [
         RemoveMessage(id=m.id)

@@ -1,8 +1,9 @@
-from typing import Literal
+from typing import Dict, Literal
+
+from httpx import AsyncClient
+
 from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
 from fpl_gaffer.settings import settings
-from httpx import AsyncClient
-from typing import Dict
 
 
 class FPLUserProfileManager:

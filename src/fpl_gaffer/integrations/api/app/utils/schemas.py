@@ -1,5 +1,6 @@
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 
 
 class PhoneVerificationRequest(BaseModel):
@@ -10,14 +11,17 @@ class PhoneVerificationResponse(BaseModel):
     status: str
     phone: str
 
+
 class TeamVerificationRequest(BaseModel):
     fpl_id: int = Field(..., gt=0)
+
 
 class TeamVerificationResponse(BaseModel):
     status: str
     fpl_id: int
     team_name: Optional[str]
     manager_name: Optional[str] = None
+
 
 class OnboardingRequest(BaseModel):
     name: str = Field(..., min_length=1)
@@ -55,9 +59,11 @@ class LeagueStandingsRequest(BaseModel):
     league_id: int
     page: Optional[int] = 1
 
+
 class LeaguesResponse(BaseModel):
     classic: List[Dict[str, Any]]
     h2h: Optional[List[Dict[str, Any]]]
+
 
 class ChatRequest(BaseModel):
     message: str

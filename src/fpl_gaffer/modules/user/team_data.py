@@ -1,7 +1,9 @@
-from typing import Dict, Optional, List, Any
-from fpl_gaffer.settings import settings
-from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
+from typing import Any, Dict, List, Optional
+
 from httpx import AsyncClient
+
+from fpl_gaffer.modules.fpl.fpl_api import FPLOfficialAPIClient
+from fpl_gaffer.settings import settings
 from fpl_gaffer.utils import build_mappings, map_player
 
 
@@ -35,16 +37,11 @@ class FPLTeamDataManger:
 
         if self.current_gw is None:
             # Get current gameweek from bootstrap data
-            current_gw = next((
-                gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")
-            ), None)
+            current_gw = next((gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")), None)
             self.current_gw = current_gw.get("id")
 
         # Get the team data for the current gameweek
-        team_data = await self.api.get_gameweek_picks(
-            self.manager_id,
-            self.current_gw
-        )
+        team_data = await self.api.get_gameweek_picks(self.manager_id, self.current_gw)
 
         # Create structured squad data
         squad_data = await self.extract_squad_info(team_data, players, teams, positions)
@@ -53,13 +50,7 @@ class FPLTeamDataManger:
 
         return squad_data
 
-    async def extract_squad_info(
-        self,
-        team_data: Dict,
-        players: Dict,
-        teams: Dict,
-        positions: Dict
-    ) -> Dict:
+    async def extract_squad_info(self, team_data: Dict, players: Dict, teams: Dict, positions: Dict) -> Dict:
         """Extract detailed squad information."""
         gw_history = team_data.get("entry_history", {})
 
@@ -87,17 +78,14 @@ class FPLTeamDataManger:
         # Extract player data from picks
         for pick in picks:
             player_info = map_player(pick["element"], players, teams, positions)
-            player_info.update({
-                "position_in_team": pick["position"],
-                "multiplier": pick["multiplier"]
-            })
+            player_info.update({"position_in_team": pick["position"], "multiplier": pick["multiplier"]})
 
             # Get captain and vice captain
             if pick["is_captain"]:
                 squad_info["captain"] = player_info
 
-            if pick['is_vice_captain']:
-                squad_info['vice_captain'] = player_info
+            if pick["is_vice_captain"]:
+                squad_info["vice_captain"] = player_info
 
             # Sort out starting 11
             if pick["position"] <= 11:
@@ -164,9 +152,7 @@ class FPLTeamDataManger:
 
         if self.current_gw is None:
             # Get current gameweek from bootstrap data
-            current_gw = next((
-                gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")
-            ), None)
+            current_gw = next((gw for gw in bootstrap_data.get("events", []) if gw.get("is_current")), None)
             self.current_gw = current_gw.get("id")
 
         start_gw = 1
@@ -190,16 +176,16 @@ class FPLTeamDataManger:
                         "gameweek": gw,
                         "player_id": player_info.get("id"),
                         "player_name": player_info.get("name"),
-                        "is_vice_captain": False
+                        "is_vice_captain": False,
                     }
                     captain_picks.append(player_data)
 
-                if pick['is_vice_captain']:
+                if pick["is_vice_captain"]:
                     player_data = {
                         "gameweek": gw,
                         "player_id": player_info.get("id"),
                         "player_name": player_info.get("name"),
-                        "is_vice_captain": True
+                        "is_vice_captain": True,
                     }
                     captain_picks.append(player_data)
 

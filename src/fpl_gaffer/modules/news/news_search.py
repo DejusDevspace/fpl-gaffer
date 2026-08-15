@@ -1,10 +1,12 @@
 import os
-from tavily.async_tavily import AsyncTavilyClient
-from fpl_gaffer.settings import settings
-from fpl_gaffer.core.exceptions import NewsSearchError
-from typing import Optional, List, Dict
-from langchain_core.documents import Document
+from typing import Dict, List, Optional
+
 from dotenv import load_dotenv
+from langchain_core.documents import Document
+from tavily.async_tavily import AsyncTavilyClient
+
+from fpl_gaffer.core.exceptions import NewsSearchError
+from fpl_gaffer.settings import settings
 
 #  Load environment variables
 _ = load_dotenv()
@@ -28,9 +30,7 @@ class FPLNewsSearchClient:
     def client(self) -> AsyncTavilyClient | None:
         """Get or create TavilyClient instance (singleton pattern)."""
         if self._client is None:
-            self._client = AsyncTavilyClient(
-                api_key=settings.TAVILY_API_KEY
-            )
+            self._client = AsyncTavilyClient(api_key=settings.TAVILY_API_KEY)
         return self._client
 
     async def search_news(self, query: str, include_domains: Optional[List[str]] = None) -> Dict:
@@ -59,6 +59,4 @@ class FPLNewsSearchClient:
                 kwargs["include_domains"] = include_domains
             return await self.client.search(**kwargs)
         except Exception as e:
-            raise NewsSearchError(
-                f"Failed to retrieve search results for query '{query}': {e}"
-            ) from e
+            raise NewsSearchError(f"Failed to retrieve search results for query '{query}': {e}") from e

@@ -10,7 +10,6 @@ from fpl_gaffer.integrations.api.app.utils.phone import normalize_phone_number
 from fpl_gaffer.integrations.whatsapp.schema import WhatsAppMessage
 from fpl_gaffer.settings import settings
 
-
 UNSUPPORTED_MEDIA_RESPONSE = (
     "FPL Gaffer can only process text messages for now. Send your FPL question as text."
 )
@@ -56,9 +55,7 @@ class WhatsAppService:
             return False
 
         try:
-            self.twilio_client.verify.v2.services(
-                settings.TWILIO_VERIFY_SERVICE_SID
-            ).verifications.create(
+            self.twilio_client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create(
                 to=self.normalize_number(phone),
                 channel=settings.TWILIO_VERIFY_CHANNEL,
             )

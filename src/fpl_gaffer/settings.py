@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     """Application settings."""
 
@@ -13,7 +14,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "FPL Gaffer"
 
     # User data settings
-    FPL_MANAGER_ID: int =  2723529
+    FPL_MANAGER_ID: int = 2723529
 
     # Messages settings
     MESSAGES_AFTER_SUMMARY: int = 2

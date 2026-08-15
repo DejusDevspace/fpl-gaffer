@@ -1,8 +1,8 @@
-from fpl_gaffer.integrations.api.app.services.supabase import supabase_client
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fpl_gaffer.integrations.api.app.services.supabase import supabase_client
 from fpl_gaffer.integrations.api.app.utils.logger import logger
-from uuid import UUID
 
 
 class DatabaseService:
@@ -81,9 +81,7 @@ class DatabaseService:
                 "phone": phone,
             }
 
-            result = self.client.table("users") \
-                .upsert(data, on_conflict="phone") \
-                .execute()
+            result = self.client.table("users").upsert(data, on_conflict="phone").execute()
 
             if result.data and len(result.data) > 0:
                 return result.data[0]
@@ -100,11 +98,13 @@ class DatabaseService:
         """Get aggregated metrics using Supabase RPC or direct queries."""
         try:
             # Query requests within date range
-            response = self.client.table("requests") \
-                .select("tokens_in, tokens_out, cost_usd, latency_ms, status") \
-                .gte("created_at", start_date.isoformat()) \
-                .lte("created_at", end_date.isoformat()) \
+            response = (
+                self.client.table("requests")
+                .select("tokens_in, tokens_out, cost_usd, latency_ms, status")
+                .gte("created_at", start_date.isoformat())
+                .lte("created_at", end_date.isoformat())
                 .execute()
+            )
 
             requests = response.data
 
@@ -148,12 +148,14 @@ class DatabaseService:
     ) -> List[Dict[str, Any]]:
         """Get timeseries data (tokens/day, cost/day)."""
         try:
-            response = self.client.table("requests") \
-                .select("created_at, tokens_in, tokens_out, cost_usd, latency_ms") \
-                .gte("created_at", start_date.isoformat()) \
-                .lte("created_at", end_date.isoformat()) \
-                .order("created_at") \
+            response = (
+                self.client.table("requests")
+                .select("created_at, tokens_in, tokens_out, cost_usd, latency_ms")
+                .gte("created_at", start_date.isoformat())
+                .lte("created_at", end_date.isoformat())
+                .order("created_at")
                 .execute()
+            )
 
             requests = response.data
 
@@ -178,13 +180,15 @@ class DatabaseService:
             result = []
             for date, data in sorted(daily_data.items()):
                 avg_latency = sum(data["latencies"]) / len(data["latencies"]) if data["latencies"] else 0
-                result.append({
-                    "date": date,
-                    "tokens": data["tokens"],
-                    "cost_usd": float(data["cost_usd"]),
-                    "avg_latency_ms": float(avg_latency),
-                    "request_count": data["count"],
-                })
+                result.append(
+                    {
+                        "date": date,
+                        "tokens": data["tokens"],
+                        "cost_usd": float(data["cost_usd"]),
+                        "avg_latency_ms": float(avg_latency),
+                        "request_count": data["count"],
+                    }
+                )
 
             return result
         except Exception as e:
@@ -208,10 +212,7 @@ class DatabaseService:
             if status:
                 query = query.eq("status", status)
 
-            response = query.order("created_at", desc=True) \
-                .limit(limit) \
-                .offset(offset) \
-                .execute()
+            response = query.order("created_at", desc=True).limit(limit).offset(offset).execute()
 
             return response.data or []
         except Exception as e:
@@ -225,20 +226,18 @@ class DatabaseService:
     ) -> List[Dict[str, Any]]:
         """Get all users with usage stats."""
         try:
-            users_response = self.client.table("users") \
-                .select("*") \
-                .limit(limit) \
-                .offset(offset) \
-                .execute()
+            users_response = self.client.table("users").select("*").limit(limit).offset(offset).execute()
 
             users = users_response.data or []
 
             # Get usage stats for each user
             for user in users:
-                requests_response = self.client.table("requests") \
-                    .select("tokens_in, tokens_out, cost_usd") \
-                    .eq("user_id", user["id"]) \
+                requests_response = (
+                    self.client.table("requests")
+                    .select("tokens_in, tokens_out, cost_usd")
+                    .eq("user_id", user["id"])
                     .execute()
+                )
 
                 requests = requests_response.data or []
                 user["request_count"] = len(requests)
@@ -253,11 +252,9 @@ class DatabaseService:
     async def get_fpl_id_by_user_id(self, user_id: str) -> Optional[str]:
         """Resolve internal user_id to FPL manager_id."""
         try:
-            response = self.client.table("fpl_teams") \
-                .select("fpl_id") \
-                .eq("user_id", user_id) \
-                .single() \
-                .execute()
+            response = (
+                self.client.table("fpl_teams").select("fpl_id").eq("user_id", user_id).single().execute()
+            )
 
             if response.data:
                 return response.data.get("fpl_id")
@@ -269,11 +266,9 @@ class DatabaseService:
     async def get_user_with_fpl_by_phone(self, phone: str) -> Optional[Dict[str, Any]]:
         """Resolve a WhatsApp phone number to a user and linked FPL ID."""
         try:
-            user_response = self.client.table("users") \
-                .select("id, phone, email") \
-                .eq("phone", phone) \
-                .limit(1) \
-                .execute()
+            user_response = (
+                self.client.table("users").select("id, phone, email").eq("phone", phone).limit(1).execute()
+            )
 
             if not user_response.data:
                 return None
