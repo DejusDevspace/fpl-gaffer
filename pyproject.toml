@@ -44,5 +44,20 @@ dependencies = [
     "unstructured>=0.18.11",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "ruff>=0.8.0",
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
