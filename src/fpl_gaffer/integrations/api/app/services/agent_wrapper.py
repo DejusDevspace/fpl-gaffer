@@ -5,7 +5,7 @@ from langfuse import get_client
 
 from fpl_gaffer.settings import settings
 from fpl_gaffer.integrations.api.app.utils.logger import logger
-from fpl_gaffer.graph.graph import graph
+from fpl_gaffer.graph.graph import get_compiled_graph
 from fpl_gaffer.integrations.api.app.services.database import database_service
 
 class AgentWrapper:
@@ -81,6 +81,7 @@ class AgentWrapper:
         config = {"configurable": {"thread_id": session_id or "default"}}
 
         try:
+            graph = await get_compiled_graph()
             final_state = await graph.ainvoke(inputs, config=config)
 
             latency_ms = (time.time() - start_time) * 1000

@@ -8,21 +8,19 @@ from fpl_gaffer.integrations.api.app.routes.chat import router as chat_router
 from fpl_gaffer.integrations.api.app.routes.metrics import router as metrics_router
 from fpl_gaffer.integrations.api.app.routes.whatsapp import router as whatsapp_router
 from fpl_gaffer.integrations.api.app.routes.onboarding import router as onboarding_router
+from fpl_gaffer.graph.graph import get_compiled_graph, close_graph
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     from fpl_gaffer.integrations.api.app.db import engine, Base
-#
-#     # Ensure all tables exist at startup
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.create_all)
-#
-#     yield
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await get_compiled_graph()  # opens the Postgres checkpoint pool once, at startup
+    yield
+    await close_graph()
 
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
-    # lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(
