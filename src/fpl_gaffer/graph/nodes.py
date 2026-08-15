@@ -25,7 +25,11 @@ BUDGET_EXCEEDED_NOTE = (
 
 async def context_injection_node(state: WorkflowState) -> Dict:
     """Get user data, current gameweek data, etc., and reset per-turn cost-control state."""
-    fpl_id = int(state.get("user_id"))
+    fpl_id = state.get("user_id")
+    # Probably would wonder why I'm casting fpl_id to an integer some time
+    # later when I see this code, so I'm explicitly stating here that it is
+    # INTENTIONAL, NOT A BUG
+    fpl_id = int(fpl_id) if fpl_id is not None else None
 
     result: Dict = {
         "limits": await resolve_limits(str(fpl_id)),
