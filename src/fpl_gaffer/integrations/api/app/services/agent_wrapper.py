@@ -78,8 +78,11 @@ class AgentWrapper:
             "retry_count": 0,
         }
 
-        # Invoke Graph with Thread Memory
-        config = {"configurable": {"thread_id": session_id or "default"}}
+        # Thread continuity is keyed on fpl_id alone (one persisted conversation per FPL manager,
+        # regardless of channel/session) - session_id is accepted for logging/metadata only and does
+        # not affect which checkpoint thread this call resumes.
+        thread_id = f"fpl:{fpl_id}"
+        config = {"configurable": {"thread_id": thread_id}}
 
         try:
             graph = await get_compiled_graph()
