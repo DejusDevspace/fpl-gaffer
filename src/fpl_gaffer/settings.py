@@ -43,10 +43,14 @@ class Settings(BaseSettings):
     MAX_COMPARE_PLAYERS: int = 5
     MAX_CAPTAIN_HISTORY_GAMEWEEKS: int = 8
 
-    # Groq API settings
+    # LLM provider settings
+    LLM_PROVIDER: str = "groq"  # "groq" | "openai"
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
+    LLM_TEMPERATURE: float = 0.0
+
+    # Provider API keys (only the active provider's key needs to be set)
     GROQ_API_KEY: str = ""
-    GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_TEMPERATURE: float = 0.0
+    OPENAI_API_KEY: str = ""
 
     # Resource limits
     MAX_RETRIES: int = 1
