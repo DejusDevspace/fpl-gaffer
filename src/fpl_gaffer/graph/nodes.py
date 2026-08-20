@@ -70,7 +70,7 @@ async def context_injection_node(state: WorkflowState) -> Dict:
 
 
 def _extract_token_usage(message: AIMessage) -> Dict:
-    """Best-effort extraction of real token usage from a ChatGroq response."""
+    """Best-effort extraction of real token usage from a chat model response."""
     usage = getattr(message, "usage_metadata", None) or {}
     if usage:
         return {
@@ -121,7 +121,7 @@ async def agent_node(state: WorkflowState) -> Dict:
     )
 
     usage = _extract_token_usage(response)
-    model_name = (response.response_metadata or {}).get("model_name", settings.GROQ_MODEL_NAME)
+    model_name = (response.response_metadata or {}).get("model_name", settings.LLM_MODEL)
     new_tool_calls = len(getattr(response, "tool_calls", None) or [])
 
     return {
