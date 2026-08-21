@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, List, Optional
 
 from langchain_core.tools import tool
@@ -5,6 +6,9 @@ from pydantic import BaseModel, Field
 
 from fpl_gaffer.modules import FPLNewsSearchClient
 from fpl_gaffer.settings import settings
+from fpl_gaffer.tools._common import tool_error
+
+logger = logging.getLogger(__name__)
 
 
 class NewsSearchInput(BaseModel):
@@ -50,7 +54,7 @@ async def news_search(query: str, include_domains: Optional[List[str]] = None) -
         results = await news_client.search_news(query, include_domains=include_domains)
         return compact_news_results(query, results)
     except Exception as e:
-        return {"error": f"Error while searching news: {e}"}
+        return tool_error(logger, "news_search", e)
 
 
 @tool("news_search_tool", args_schema=NewsSearchInput)

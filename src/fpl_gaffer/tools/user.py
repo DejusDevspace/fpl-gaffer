@@ -1,3 +1,4 @@
+import logging
 from typing import Dict
 
 from langchain_core.tools import tool
@@ -5,6 +6,9 @@ from pydantic import BaseModel, Field
 
 from fpl_gaffer.modules import FPLOfficialAPIClient, FPLTeamDataManger
 from fpl_gaffer.settings import settings
+from fpl_gaffer.tools._common import tool_error
+
+logger = logging.getLogger(__name__)
 
 
 class UserTeamInfoInput(BaseModel):
@@ -37,7 +41,7 @@ async def get_user_team_info(manager_id: int, gameweek: int) -> Dict | None:
         team_manager = FPLTeamDataManger(FPLOfficialAPIClient(), manager_id, picks_gameweek)
         return await team_manager.extract_team_data()
     except Exception as e:
-        return {"error": f"Error while fetching user team info: {e}"}
+        return tool_error(logger, "get_user_team_info", e)
 
 
 async def get_user_transfer_history(manager_id: int) -> Dict:
@@ -47,7 +51,7 @@ async def get_user_transfer_history(manager_id: int) -> Dict:
         transfers = await team_manager.get_transfer_history()
         return {"manager_id": manager_id, "count": len(transfers), "transfers": transfers}
     except Exception as e:
-        return {"error": f"Error while fetching transfer history: {e}"}
+        return tool_error(logger, "get_user_transfer_history", e)
 
 
 async def get_user_captain_history(manager_id: int, current_gameweek: int, num_gameweeks: int) -> Dict:
@@ -58,7 +62,7 @@ async def get_user_captain_history(manager_id: int, current_gameweek: int, num_g
         picks = await team_manager.get_captain_picks(num_gameweeks=num_gameweeks)
         return {"manager_id": manager_id, "gameweeks_analyzed": num_gameweeks, "picks": picks}
     except Exception as e:
-        return {"error": f"Error while fetching captain history: {e}"}
+        return tool_error(logger, "get_user_captain_history", e)
 
 
 async def get_league_standings(league_id: int, page: int) -> Dict:
@@ -67,7 +71,7 @@ async def get_league_standings(league_id: int, page: int) -> Dict:
         team_manager = FPLTeamDataManger(FPLOfficialAPIClient(), settings.FPL_MANAGER_ID)
         return await team_manager.get_league_standings(league_id, page)
     except Exception as e:
-        return {"error": f"Error while fetching league standings: {e}"}
+        return tool_error(logger, "get_league_standings", e)
 
 
 @tool("get_user_team_info_tool", args_schema=UserTeamInfoInput)
