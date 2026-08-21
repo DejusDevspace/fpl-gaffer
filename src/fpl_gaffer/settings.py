@@ -57,7 +57,7 @@ class Settings(BaseSettings):
 
     # Cost control limits (single global tier today; see core/limits.py for the per-user hook)
     MAX_TOOL_CALLS_PER_TURN: int = 6
-    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 3000
+    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 100000
 
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
