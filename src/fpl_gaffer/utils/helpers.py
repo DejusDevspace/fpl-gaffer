@@ -33,6 +33,7 @@ def get_chat_model() -> BaseChatModel:
             api_key=settings.OPENAI_API_KEY,
             model=settings.LLM_MODEL,
             temperature=settings.LLM_TEMPERATURE,
+            use_responses_api=True,
         )
 
     raise ValueError(f"Unsupported LLM_PROVIDER: '{provider}'. Supported providers: 'groq', 'openai'.")
