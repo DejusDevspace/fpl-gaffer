@@ -43,17 +43,21 @@ class Settings(BaseSettings):
     MAX_COMPARE_PLAYERS: int = 5
     MAX_CAPTAIN_HISTORY_GAMEWEEKS: int = 8
 
-    # Groq API settings
+    # LLM provider settings
+    LLM_PROVIDER: str = "groq"  # "groq" | "openai"
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
+    LLM_TEMPERATURE: float = 0.0
+
+    # Provider API keys (only the active provider's key needs to be set)
     GROQ_API_KEY: str = ""
-    GROQ_MODEL_NAME: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_TEMPERATURE: float = 0.0
+    OPENAI_API_KEY: str = ""
 
     # Resource limits
     MAX_RETRIES: int = 1
 
     # Cost control limits (single global tier today; see core/limits.py for the per-user hook)
     MAX_TOOL_CALLS_PER_TURN: int = 6
-    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 3000
+    MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 100000
 
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
