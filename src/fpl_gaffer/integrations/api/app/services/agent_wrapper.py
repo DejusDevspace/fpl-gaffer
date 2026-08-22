@@ -49,7 +49,7 @@ class AgentWrapper:
                     "tokens_out": 0,
                     "latency_ms": (time.time() - start_time) * 1000,
                     "cost_usd": 0.0,
-                    "model": settings.GROQ_MODEL_NAME,
+                    "model": settings.LLM_MODEL,
                     "status": "error",
                     "error": "Could not resolve an FPL ID for this user.",
                 }
@@ -66,7 +66,7 @@ class AgentWrapper:
                     "tokens_out": 0,
                     "latency_ms": (time.time() - start_time) * 1000,
                     "cost_usd": 0.0,
-                    "model": settings.GROQ_MODEL_NAME,
+                    "model": settings.LLM_MODEL,
                     "status": "error",
                     "error": "No FPL ID available for this request.",
                 }
@@ -94,7 +94,7 @@ class AgentWrapper:
             # Extract Metrics from state
             tokens_in = final_state.get("tokens_in", 0)
             tokens_out = final_state.get("tokens_out", 0)
-            model = final_state.get("model", settings.GROQ_MODEL_NAME)
+            model = final_state.get("model", settings.LLM_MODEL)
 
             # Fallback token estimation if graph didn't populate them
             if tokens_in == 0 and self.token_encoder:
@@ -156,7 +156,7 @@ class AgentWrapper:
                 "tokens_out": 0,
                 "latency_ms": latency_ms,
                 "cost_usd": 0.0,
-                "model": settings.GROQ_MODEL_NAME,
+                "model": settings.LLM_MODEL,
                 "status": "error",
                 "error": str(e),
             }
