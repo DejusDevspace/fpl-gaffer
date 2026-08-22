@@ -21,6 +21,9 @@ class Settings(BaseSettings):
 
     # FPL Official API settings
     FPL_API_BASE_URL: str = "https://fantasy.premierleague.com/api"
+    FPL_API_TIMEOUT_SECONDS: float = 10.0
+    FPL_BOOTSTRAP_CACHE_TTL_SECONDS: int = 3600  # 1 hour
+    FPL_FIXTURES_CACHE_TTL_SECONDS: int = 3600  # 1 hour
 
     # FPL News Search Client settings
     TAVILY_API_KEY: str = ""
@@ -46,7 +49,7 @@ class Settings(BaseSettings):
     # LLM provider settings
     LLM_PROVIDER: str = "groq"  # "groq" | "openai"
     LLM_MODEL: str = "llama-3.3-70b-versatile"
-    LLM_TEMPERATURE: float = 0.0
+    LLM_TEMPERATURE: float = 0.2
 
     # Provider API keys (only the active provider's key needs to be set)
     GROQ_API_KEY: str = ""
