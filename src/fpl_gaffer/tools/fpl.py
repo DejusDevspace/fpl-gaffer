@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, Literal
 
 from langchain_core.tools import tool
@@ -5,6 +6,9 @@ from pydantic import BaseModel, Field
 
 from fpl_gaffer.modules import FPLDataManager, FPLOfficialAPIClient
 from fpl_gaffer.settings import settings
+from fpl_gaffer.tools._common import tool_error
+
+logger = logging.getLogger(__name__)
 
 
 class PlayerByPositionInput(BaseModel):
@@ -57,7 +61,7 @@ async def get_players_by_position(position: Literal["GKP", "DEF", "MID", "FWD"],
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.get_players_by_position(position, max_price)
     except Exception as e:
-        return {"error": f"Error while fetching players by position: {e}"}
+        return tool_error(logger, "get_players_by_position", e)
 
 
 async def get_player_data(player_names: List[str]) -> List[Dict] | Dict:
@@ -66,7 +70,7 @@ async def get_player_data(player_names: List[str]) -> List[Dict] | Dict:
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.get_player_data(player_names)
     except Exception as e:
-        return {"error": f"Error while fetching player data: {e}"}
+        return tool_error(logger, "get_player_data", e)
 
 
 async def get_fixtures_for_range(num_gameweeks: int) -> Dict:
@@ -75,7 +79,7 @@ async def get_fixtures_for_range(num_gameweeks: int) -> Dict:
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.get_fixtures_for_range(num_gameweeks)
     except Exception as e:
-        return {"error": f"Error while fetching fixtures: {e}"}
+        return tool_error(logger, "get_fixtures_for_range", e)
 
 
 async def get_player_form(player_names: List[str], num_gameweeks: int) -> Dict:
@@ -84,7 +88,7 @@ async def get_player_form(player_names: List[str], num_gameweeks: int) -> Dict:
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.get_player_gameweek_history(player_names, num_gameweeks)
     except Exception as e:
-        return {"error": f"Error while fetching player form: {e}"}
+        return tool_error(logger, "get_player_form", e)
 
 
 async def compare_players(player_names: List[str], num_gameweeks_form: int) -> Dict:
@@ -93,7 +97,7 @@ async def compare_players(player_names: List[str], num_gameweeks_form: int) -> D
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.compare_players(player_names, num_gameweeks_form)
     except Exception as e:
-        return {"error": f"Error while comparing players: {e}"}
+        return tool_error(logger, "compare_players", e)
 
 
 async def get_price_movers(direction: Literal["rising", "falling"], limit: int) -> Dict:
@@ -102,7 +106,7 @@ async def get_price_movers(direction: Literal["rising", "falling"], limit: int) 
         data_manager = FPLDataManager(FPLOfficialAPIClient())
         return await data_manager.get_price_movers(direction, limit)
     except Exception as e:
-        return {"error": f"Error while fetching price movers: {e}"}
+        return tool_error(logger, "get_price_movers", e)
 
 
 async def get_differential_candidates(
@@ -118,7 +122,7 @@ async def get_differential_candidates(
             position, max_price, max_ownership_percent, min_form
         )
     except Exception as e:
-        return {"error": f"Error while fetching differential candidates: {e}"}
+        return tool_error(logger, "get_differential_candidates", e)
 
 
 @tool("get_players_by_position_tool", args_schema=PlayerByPositionInput)

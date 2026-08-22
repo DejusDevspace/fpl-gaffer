@@ -1,3 +1,61 @@
+# Fix — Latency: FPL API Caching & Connection Reuse
+
+## Context (updated)
+
+Earlier investigation into 80-100s turn latency initially flagged an `LLM_MODEL`/`GROQ_MODEL_NAME`
+mismatch as a likely contributor. That turned out to be based on an outdated copy of the codebase —
+**the multi-provider work is already fully and correctly implemented**: `settings.py` has proper
+`LLM_PROVIDER`/`LLM_MODEL`/`OPENAI_API_KEY` fields, `helpers.py` correctly dispatches to `ChatGroq`
+or `ChatOpenAI`, and `gpt-5.6-luna` is a real, current OpenAI model (released July 2026 as the
+fast/cost-efficient tier of the GPT-5.6 family) — not a typo or a silently-ignored setting. No fix
+needed there. This guide now covers only the confirmed, still-outstanding issue: the FPL API
+client layer.
+
+## The actual issue
+
+`FPLOfficialAPIClient` has zero caching and creates a brand-new `httpx.AsyncClient` (fresh
+TCP+TLS handshake) on every instantiation:
+
+```python
+class FPLOfficialAPIClient:
+    def __init__(self):
+        self.base_url = settings.FPL_API_BASE_URL
+        self.session = AsyncClient()
+```
+
+This constructor is called fresh at 12+ call sites across `tools/fpl.py`, `tools/user.py`, and
+`graph/nodes.py::context_injection_node` — once per tool call, not once per turn. Nearly every
+method in `fpl_data.py`/`team_data.py` starts with `await self.api.get_bootstrap_data()`, which
+hits `/bootstrap-static/` fresh every time — a multi-MB response containing every player, team,
+and gameweek event, identical for every user, re-fetched and re-parsed from scratch on every call
+that needs it. A single turn calling two or three tools that each need player/team data can easily
+mean two or three full bootstrap-static downloads over brand-new connections. This is the primary
+suspected driver of the 80-100s turns, independent of which LLM provider is in use.
+
+## Fix — shared HTTP client + TTL cache for shared/global data only
+
+### Scope — what gets cached, what doesn't
+
+Cache **only** genuinely shared, slow-changing data: `/bootstrap-static/` and `/fixtures/`. Both
+are identical for every user and change at most a handful of times a day.
+
+**Do not** cache per-manager endpoints (`get_manager_data`, `get_gameweek_picks`,
+`get_manager_history`, `get_transfer_data`, `get_classic_league_standings`) — these are
+user-specific and time-sensitive. Caching those would serve stale personal data, which is a
+correctness bug, not a latency win.
+
+### 1. `settings.py` additions
+
+```python
+    # FPL API client settings
+    FPL_API_TIMEOUT_SECONDS: float = 10.0
+    FPL_BOOTSTRAP_CACHE_TTL_SECONDS: int = 300  # 5 minutes
+    FPL_FIXTURES_CACHE_TTL_SECONDS: int = 300
+```
+
+### 2. `modules/fpl/fpl_api.py` (full replacement)
+
+```python
 import asyncio
 from typing import Dict, Optional
 
@@ -131,3 +189,67 @@ class FPLOfficialAPIClient:
         # which would be wrong now that the session is usually the shared, pooled one used by
         # every other in-flight request.
         return None
+```
+
+This is a drop-in replacement — every existing call site (`FPLOfficialAPIClient()` with no args)
+keeps working unchanged, and transparently starts sharing one pooled connection and hitting the
+cache instead of the network for bootstrap/fixtures.
+
+### 3. Close the shared client on app shutdown
+
+In `integrations/api/main.py`'s `lifespan` (alongside the checkpointer close, if that's already
+wired from the deployment guide):
+
+```python
+from fpl_gaffer.modules.fpl.fpl_api import close_shared_http_client
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await get_compiled_graph()
+    yield
+    await close_shared_http_client()
+    await close_graph()
+```
+
+### 4. `pyproject.toml`
+
+`cachetools` and `httpx` are already dependencies — no change needed there.
+
+## Sanity checklist
+
+- [ ] `pytest` still passes — `test_user_tools.py`, `test_tool_error_isolation.py` mock
+      `FPLTeamDataManger`/data-manager classes directly, so this change shouldn't affect them, but
+      confirm rather than assume.
+- [ ] Add one new test: call `get_bootstrap_data()` twice in a row with the underlying `_get`
+      mocked, and assert the mock was only invoked once (proves the cache is actually
+      short-circuiting, not just present in the code).
+- [ ] Add a second test confirming two `FPLOfficialAPIClient()` instances created without an
+      explicit session share the same underlying `httpx.AsyncClient` (via `get_shared_http_client()`
+      returning the same object both times) — proves connection reuse is actually happening, not
+      just structurally possible.
+- [ ] Manually run a turn that triggers 2-3 tools (e.g. "compare Haaland and Watkins and check
+      what the scouts think") and compare wall-clock latency before/after this change. This is the
+      number that actually matters.
+- [ ] Confirm `__aexit__` is not called anywhere expecting the old close-on-exit behavior — grep
+      `async with FPLOfficialAPIClient()` across the codebase; if any call site relies on that
+      pattern to clean up a per-call session, it now no-ops by design (the session is shared), which
+      is correct but worth confirming nothing assumed otherwise.
+
+## If latency is still high after this
+
+Two things worth checking next, in order — but only after measuring with the fix above in place,
+not before:
+
+1. **A/B the LLM provider directly**, since multi-provider switching already works: flip `.env` to
+   `LLM_PROVIDER=groq` and rerun the same turn, compare wall-clock time against `openai`/
+   `gpt-5.6-luna`. This tells you directly how much of any remaining latency is provider-side.
+2. **Check reasoning-effort/verbosity defaults for GPT-5.6 on the Responses API.** If staying on
+   OpenAI, GPT-5-series models typically support a `reasoning_effort`/`verbosity`-style parameter
+   in the Responses API; if `helpers.py`'s `ChatOpenAI(...)` call isn't setting it explicitly, it
+   may default to something higher than needed for a WhatsApp-conversational-latency use case, even
+   on the Luna tier.
+
+Response validation node timing and tool-call batching (the original #3/#4 from the first pass of
+this investigation) are still on the table if needed, but confirm with real before/after numbers
+first — this fix and the two checks above are much more likely to explain the bulk of it.
