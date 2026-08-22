@@ -41,7 +41,7 @@ async def whatsapp_webhook(request: Request) -> Response:
         if not sent:
             return Response(content="Failed to send WhatsApp reply", status_code=500)
 
-        return Response(content="Message processed successfully", status_code=200)
+        return Response(status_code=204)
     except Exception as exc:
         logger.error("Error processing WhatsApp webhook: %s", exc, exc_info=True)
         return Response(content="Internal server error", status_code=500)

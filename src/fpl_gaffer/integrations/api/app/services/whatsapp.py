@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from twilio.request_validator import RequestValidator
 from twilio.rest import Client
@@ -9,6 +9,7 @@ from fpl_gaffer.integrations.api.app.utils.logger import logger
 from fpl_gaffer.integrations.api.app.utils.phone import normalize_phone_number
 from fpl_gaffer.integrations.whatsapp.schema import WhatsAppMessage
 from fpl_gaffer.settings import settings
+from fpl_gaffer.utils.helpers import extract_message_text
 
 UNSUPPORTED_MEDIA_RESPONSE = (
     "FPL Gaffer can only process text messages for now. Send your FPL question as text."
@@ -152,12 +153,13 @@ class WhatsAppService:
             return f"{DEFAULT_LINK_FPL_RESPONSE}\n\nLink it here: {settings.ONBOARDING_URL}"
         return DEFAULT_LINK_FPL_RESPONSE
 
-    async def send_message(self, to_number: str, message: str) -> bool:
+    async def send_message(self, to_number: str, message: Any) -> bool:
         """Send a WhatsApp text message through Twilio."""
         try:
+            clean_message = extract_message_text(message)
             response = self.twilio_client.messages.create(
                 from_=f"whatsapp:{settings.TWILIO_NUMBER}",
-                body=message,
+                body=clean_message,
                 to=f"whatsapp:{self.normalize_number(to_number)}",
             )
             logger.info("WhatsApp message sent", extra={"message_id": response.sid})

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -37,3 +38,26 @@ def get_chat_model() -> BaseChatModel:
         )
 
     raise ValueError(f"Unsupported LLM_PROVIDER: '{provider}'. Supported providers: 'groq', 'openai'.")
+
+
+def extract_message_text(content: Any) -> str:
+    """Extract plain string text from a message content field (str, list of blocks, or dict)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                if block.get("type") == "text" and "text" in block:
+                    parts.append(str(block["text"]))
+                elif "text" in block:
+                    parts.append(str(block["text"]))
+        return "\n".join(parts) if parts else str(content)
+    if isinstance(content, dict):
+        if content.get("type") == "text" and "text" in content:
+            return str(content["text"])
+        if "text" in content:
+            return str(content["text"])
+    return str(content) if content is not None else ""

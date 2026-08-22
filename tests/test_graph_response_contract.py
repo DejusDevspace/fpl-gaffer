@@ -63,6 +63,32 @@ class GraphResponseContractTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["response"], "Validated response")
         self.assertNotIn("messages", result)  # no duplicate append - agent_node already did it
 
+    async def test_validation_extracts_plain_string_from_structured_content_blocks(self):
+        chain = _FakeChain(ResponseValidation(validation_passed=True, errors=[], suggestions=[]))
+        structured_content = [{"type": "text", "text": "Structured response content"}]
+        state = {
+            "messages": [
+                HumanMessage(content="How is my team?"),
+                AIMessage(content=structured_content),
+            ],
+            "user_id": 123,
+            "gameweek_data": {"gameweek": 1},
+            "user_data": {
+                "team_name": "Test FC",
+                "total_points": 10,
+                "overall_rank": 1000,
+            },
+            "retry_count": 0,
+            "tool_calls_this_turn": 1,
+        }
+
+        with patch("fpl_gaffer.graph.nodes.get_response_validation_chain", return_value=chain):
+            result = await response_validation_node(state)
+
+        self.assertTrue(result["validation_passed"])
+        self.assertEqual(result["response"], "Structured response content")
+        self.assertEqual(chain.received["generated_response"], "Structured response content")
+
 
 if __name__ == "__main__":
     unittest.main()
