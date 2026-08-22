@@ -14,7 +14,7 @@ from fpl_gaffer.graph.state import WorkflowState
 from fpl_gaffer.modules import FPLDataManager, FPLOfficialAPIClient, FPLUserProfileManager
 from fpl_gaffer.settings import settings
 from fpl_gaffer.utils.chains import get_agent_chain, get_response_validation_chain
-from fpl_gaffer.utils.helpers import get_chat_model
+from fpl_gaffer.utils.helpers import extract_message_text, get_chat_model
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +174,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
     Skips the LLM call entirely when no tools were used this turn (nothing to hallucinate from),
     and scopes the validation context to this turn's exchange rather than the full conversation."""
     final_message = state["messages"][-1]
+    final_text = extract_message_text(final_message.content)
 
     # Nothing was fetched via a tool this turn, so there's nothing to hallucinate from a data
     # standpoint - skip the validation LLM call and its full-history payload entirely.
@@ -182,7 +183,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "validation_passed": True,
             "validation_errors": [],
             "validation_suggestions": [],
-            "response": final_message.content,
+            "response": final_text,
             "retry_count": 0,
         }
 
@@ -192,7 +193,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "validation_passed": True,
             "validation_errors": [],
             "validation_suggestions": [],
-            "response": final_message.content,
+            "response": final_text,
             "retry_count": 0,
         }
 
@@ -214,7 +215,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
         {
             "context": turn_context,
             "user_info": json.dumps(user_info, indent=2),
-            "generated_response": final_message.content,
+            "generated_response": final_text,
         }
     )
 
@@ -225,7 +226,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
             "validation_passed": True,
             "validation_errors": [],
             "validation_suggestions": [],
-            "response": final_message.content,
+            "response": final_text,
             "retry_count": 0,
         }
 
