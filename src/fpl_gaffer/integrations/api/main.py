@@ -10,6 +10,7 @@ from fpl_gaffer.integrations.api.app.routes.metrics import router as metrics_rou
 from fpl_gaffer.integrations.api.app.routes.onboarding import router as onboarding_router
 from fpl_gaffer.integrations.api.app.routes.user import router as user_router
 from fpl_gaffer.integrations.api.app.routes.whatsapp import router as whatsapp_router
+from fpl_gaffer.modules.fpl.fpl_api import close_shared_http_client
 from fpl_gaffer.settings import settings
 
 
@@ -17,6 +18,7 @@ from fpl_gaffer.settings import settings
 async def lifespan(app: FastAPI):
     await get_compiled_graph()  # opens the Postgres checkpoint pool once, at startup
     yield
+    await close_shared_http_client()
     await close_graph()
 
 
