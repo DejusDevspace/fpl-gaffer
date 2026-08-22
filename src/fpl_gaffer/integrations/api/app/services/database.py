@@ -321,5 +321,54 @@ class DatabaseService:
             logger.error(f"Error counting turns today for user {user_id}: {str(e)}")
             return 0
 
+    async def upsert_subscription(
+        self,
+        user_id: str,
+        tier: str,
+        status: str,
+        provider: str,
+        provider_customer_id: str,
+        provider_subscription_id: str,
+        current_period_end: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Create or update a user's subscription row. Called only from webhook handlers."""
+        try:
+            data = {
+                "user_id": user_id,
+                "tier": tier,
+                "status": status,
+                "provider": provider,
+                "provider_customer_id": provider_customer_id,
+                "provider_subscription_id": provider_subscription_id,
+                "current_period_end": current_period_end,
+            }
+            result = self.client.table("subscriptions").upsert(data, on_conflict="user_id").execute()
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error upserting subscription for user {user_id}: {str(e)}")
+            return None
+
+    async def get_user_by_provider_customer_id(
+        self, provider: str, provider_customer_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve a user_id from a provider's customer identifier."""
+        try:
+            result = (
+                self.client.table("subscriptions")
+                .select("user_id")
+                .eq("provider", provider)
+                .eq("provider_customer_id", provider_customer_id)
+                .limit(1)
+                .execute()
+            )
+            if result.data and len(result.data) > 0:
+                return result.data[0]
+            return None
+        except Exception as e:
+            logger.error(f"Error resolving user by provider customer id {provider_customer_id}: {str(e)}")
+            return None
+
 
 database_service = DatabaseService()
