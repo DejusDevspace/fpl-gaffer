@@ -286,5 +286,40 @@ class DatabaseService:
             logger.error(f"Error resolving user by phone {phone}: {str(e)}")
             return None
 
+    async def get_user_tier(self, user_id: str) -> str:
+        """Get the user's current subscription tier. Returns 'free' if no active subscription
+        row exists - absence of a row, or a non-active status, both mean free."""
+        try:
+            result = (
+                self.client.table("subscriptions").select("tier, status").eq("user_id", user_id).execute()
+            )
+            if not result.data:
+                return "free"
+            row = result.data[0]
+            if row.get("status") != "active":
+                return "free"
+            return row.get("tier", "free")
+        except Exception as e:
+            logger.error(f"Error fetching subscription tier for user {user_id}: {str(e)}")
+            return "free"
+
+    async def count_turns_today(self, user_id: str) -> int:
+        """Count how many agent turns this user has used today (UTC), for daily-cap enforcement."""
+        try:
+            from datetime import datetime, timezone
+
+            start_of_day = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            result = (
+                self.client.table("requests")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .gte("created_at", start_of_day.isoformat())
+                .execute()
+            )
+            return result.count or 0
+        except Exception as e:
+            logger.error(f"Error counting turns today for user {user_id}: {str(e)}")
+            return 0
+
 
 database_service = DatabaseService()
