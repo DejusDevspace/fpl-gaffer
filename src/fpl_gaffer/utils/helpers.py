@@ -8,7 +8,7 @@ from fpl_gaffer.settings import settings
 logger = logging.getLogger(__name__)
 
 
-def get_chat_model() -> BaseChatModel:
+def get_chat_model(reasoning_effort: str | None = None) -> BaseChatModel:
     """Return a chat model instance based on the configured LLM_PROVIDER.
 
     Switching providers requires only changing env vars:
@@ -30,11 +30,15 @@ def get_chat_model() -> BaseChatModel:
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
+        kwargs = {"use_responses_api": True}
+        if reasoning_effort:
+            kwargs["reasoning_effort"] = reasoning_effort
+
         return ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
             model=settings.LLM_MODEL,
             temperature=settings.LLM_TEMPERATURE,
-            use_responses_api=True,
+            **kwargs,
         )
 
     raise ValueError(f"Unsupported LLM_PROVIDER: '{provider}'. Supported providers: 'groq', 'openai'.")

@@ -106,7 +106,11 @@ async def agent_node(state: WorkflowState) -> Dict:
     if budget_exceeded:
         retry_feedback += BUDGET_EXCEEDED_NOTE
 
-    chain = get_agent_chain(FPL_GAFFER_SYSTEM_PROMPT, bind_tools=not budget_exceeded)
+    chain = get_agent_chain(
+        FPL_GAFFER_SYSTEM_PROMPT,
+        bind_tools=not budget_exceeded,
+        reasoning_effort=limits.get("reasoning_effort"),
+    )
 
     response = await chain.ainvoke(
         {
@@ -211,7 +215,7 @@ async def response_validation_node(state: WorkflowState) -> Dict:
     turn_context = state["messages"][turn_start:-1]
 
     chain = get_response_validation_chain(RESPONSE_VALIDATION_PROMPT)
-    response = await chain.ainvoke(
+    res = await chain.ainvoke(
         {
             "context": turn_context,
             "user_info": json.dumps(user_info, indent=2),
@@ -219,21 +223,36 @@ async def response_validation_node(state: WorkflowState) -> Dict:
         }
     )
 
-    logger.debug("Validation response: %s", response)
+    parsed = res.get("parsed") if isinstance(res, dict) else res
+    raw_message = res.get("raw") if isinstance(res, dict) else None
+    usage = _extract_token_usage(raw_message) if raw_message else {"tokens_in": 0, "tokens_out": 0}
 
-    if response.validation_passed:
+    new_tokens_in = state.get("tokens_in", 0) + usage["tokens_in"]
+    new_tokens_out = state.get("tokens_out", 0) + usage["tokens_out"]
+
+    logger.debug("Validation response: %s", parsed)
+
+    validation_passed = getattr(parsed, "validation_passed", True) if parsed else True
+    errors = getattr(parsed, "errors", []) if parsed else []
+    suggestions = getattr(parsed, "suggestions", []) if parsed else []
+
+    if validation_passed:
         return {
             "validation_passed": True,
             "validation_errors": [],
             "validation_suggestions": [],
             "response": final_text,
             "retry_count": 0,
+            "tokens_in": new_tokens_in,
+            "tokens_out": new_tokens_out,
         }
 
     return {
         "validation_passed": False,
-        "validation_errors": response.errors,
-        "validation_suggestions": response.suggestions,
+        "validation_errors": errors,
+        "validation_suggestions": suggestions,
+        "tokens_in": new_tokens_in,
+        "tokens_out": new_tokens_out,
     }
 
 
