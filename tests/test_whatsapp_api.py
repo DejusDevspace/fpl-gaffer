@@ -69,7 +69,7 @@ class WhatsAppApiTests(unittest.IsolatedAsyncioTestCase):
                 )
             )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
         validate_signature.assert_called_once()
         message = process_message.call_args.args[0]
         self.assertEqual(message.message_body, "Who should I captain?")
