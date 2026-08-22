@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from fpl_gaffer.graph.graph import close_graph, get_compiled_graph
+from fpl_gaffer.integrations.api.app.routes.billing import router as billing_router
 from fpl_gaffer.integrations.api.app.routes.chat import router as chat_router
 from fpl_gaffer.integrations.api.app.routes.metrics import router as metrics_router
 from fpl_gaffer.integrations.api.app.routes.onboarding import router as onboarding_router
@@ -57,3 +58,4 @@ app.include_router(chat_router)
 app.include_router(metrics_router)
 app.include_router(whatsapp_router)
 app.include_router(onboarding_router)
+app.include_router(billing_router)
