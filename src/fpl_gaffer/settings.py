@@ -69,6 +69,14 @@ class Settings(BaseSettings):
         "pro": {"daily_turn_limit": 20, "max_tool_calls_per_turn": 10, "reasoning_effort": "high"},
     }
 
+    # Billing settings
+    STRIPE_API_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_BASIC_PRICE_ID: str = ""
+
+    PAYSTACK_SECRET_KEY: str = ""
+    PAYSTACK_BASIC_PLAN_CODE: str = ""
+
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
 
