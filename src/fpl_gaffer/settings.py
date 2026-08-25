@@ -62,6 +62,21 @@ class Settings(BaseSettings):
     MAX_TOOL_CALLS_PER_TURN: int = 6
     MAX_CONTEXT_TOKENS_BEFORE_SUMMARY: int = 100000
 
+    # Subscription tier limits
+    TIER_LIMITS: dict = {
+        "free": {"daily_turn_limit": 5, "max_tool_calls_per_turn": 3, "reasoning_effort": "low"},
+        "basic": {"daily_turn_limit": 10, "max_tool_calls_per_turn": 6, "reasoning_effort": "medium"},
+        "pro": {"daily_turn_limit": 20, "max_tool_calls_per_turn": 10, "reasoning_effort": "high"},
+    }
+
+    # Billing settings
+    STRIPE_API_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_BASIC_PRICE_ID: str = ""
+
+    PAYSTACK_SECRET_KEY: str = ""
+    PAYSTACK_BASIC_PLAN_CODE: str = ""
+
     # Memory settings
     SHORT_TERM_MEMORY_DB_PATH: str = "./src/fpl_gaffer/data/memory.db"
 

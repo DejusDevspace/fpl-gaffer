@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 import tiktoken
 from langfuse import get_client
 
+from fpl_gaffer.core.limits import resolve_limits
 from fpl_gaffer.graph.graph import get_compiled_graph
 from fpl_gaffer.integrations.api.app.services.database import database_service
 from fpl_gaffer.integrations.api.app.utils.logger import logger
@@ -70,6 +71,41 @@ class AgentWrapper:
                     "model": settings.LLM_MODEL,
                     "status": "error",
                     "error": "No FPL ID available for this request.",
+                }
+
+        # Resolve subscription tier limits & enforce daily turn limit before running the graph
+        lookup_user_id = user_id or str(fpl_id)
+        limits = await resolve_limits(lookup_user_id)
+        daily_turn_limit = limits.get("daily_turn_limit")
+
+        if daily_turn_limit is not None:
+            turns_today = await database_service.count_turns_today(lookup_user_id)
+            if turns_today >= daily_turn_limit:
+                tier_name = limits.get("tier", "free")
+                upgrade_link_note = (
+                    f"\n\nUpgrade your plan here: {settings.ONBOARDING_URL}/billing"
+                    if settings.ONBOARDING_URL
+                    else ""
+                )
+                if tier_name == "free":
+                    limit_text = (
+                        f"You've reached your daily limit of {daily_turn_limit} messages on the Free plan. "
+                        f"Your limit resets tomorrow, or upgrade to Basic for more daily messages!{upgrade_link_note}"
+                    )
+                else:
+                    limit_text = (
+                        f"You've reached your daily limit of {daily_turn_limit} messages for today. "
+                        f"Your limit resets tomorrow, or upgrade to Pro for higher limits!{upgrade_link_note}"
+                    )
+
+                return {
+                    "text": limit_text,
+                    "tokens_in": 0,
+                    "tokens_out": 0,
+                    "latency_ms": (time.time() - start_time) * 1000,
+                    "cost_usd": 0.0,
+                    "model": settings.LLM_MODEL,
+                    "status": "limit_reached",
                 }
 
         inputs = {
