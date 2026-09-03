@@ -20,7 +20,7 @@ class UserToolTests(unittest.IsolatedAsyncioTestCase):
         manager_cls.assert_called_once()
         _, manager_id, picks_gameweek = manager_cls.call_args.args
         self.assertEqual(manager_id, 123)
-        self.assertEqual(picks_gameweek, 4)
+        self.assertEqual(picks_gameweek, 5)
         self.assertEqual(result, {"manager_id": 123})
 
     async def test_user_team_tool_never_requests_gameweek_zero(self):

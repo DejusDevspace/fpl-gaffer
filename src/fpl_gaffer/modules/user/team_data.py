@@ -29,7 +29,7 @@ class FPLTeamDataManger:
         # Fetch bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
+        if not bootstrap_data:
             return {}
 
         # Build mappings from bootstrap data
@@ -45,7 +45,7 @@ class FPLTeamDataManger:
 
         # Create structured squad data
         squad_data = await self.extract_squad_info(team_data, players, teams, positions)
-        if squad_data is None:
+        if not squad_data:
             return None
 
         return squad_data
@@ -113,7 +113,7 @@ class FPLTeamDataManger:
         # Get bootstrap data
         bootstrap_data = await self.api.get_bootstrap_data()
 
-        if bootstrap_data is None:
+        if not bootstrap_data:
             return []
 
         # Build mappings from bootstrap data

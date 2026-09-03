@@ -64,7 +64,11 @@ class Settings(BaseSettings):
 
     # Subscription tier limits
     TIER_LIMITS: dict = {
-        "free": {"daily_turn_limit": 5, "max_tool_calls_per_turn": 3, "reasoning_effort": "low"},
+        "free": {
+            "daily_turn_limit": 15,
+            "max_tool_calls_per_turn": 6,
+            "reasoning_effort": "low",
+        },  # Increased temporarily for launch
         "basic": {"daily_turn_limit": 10, "max_tool_calls_per_turn": 6, "reasoning_effort": "medium"},
         "pro": {"daily_turn_limit": 20, "max_tool_calls_per_turn": 10, "reasoning_effort": "high"},
     }

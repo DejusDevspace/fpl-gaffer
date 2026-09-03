@@ -37,8 +37,12 @@ class LeagueStandingsInput(BaseModel):
 async def get_user_team_info(manager_id: int, gameweek: int) -> Dict | None:
     """Implementation for get_user_team_info_tool. Kept importable for tests."""
     try:
-        picks_gameweek = max(1, gameweek - 1)
-        team_manager = FPLTeamDataManger(FPLOfficialAPIClient(), manager_id, picks_gameweek)
+        # It seems the line below causes an issue when resolving for some gameweeks. For example,
+        # if gameweek 2 is completed, the line below would never return the info for gameweek 2 because
+        # we still subtract 1 from the current gameweek. So we will just use the gameweek passed in as an argument.
+
+        # picks_gameweek = max(1, gameweek - 1)
+        team_manager = FPLTeamDataManger(FPLOfficialAPIClient(), manager_id, gameweek)
         return await team_manager.extract_team_data()
     except Exception as e:
         return tool_error(logger, "get_user_team_info", e)
