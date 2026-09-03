@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 from fpl_gaffer.core.limits import resolve_limits
 from fpl_gaffer.integrations.api.app.services.agent_wrapper import agent_wrapper
+from fpl_gaffer.settings import settings
 
 
 class SubscriptionTierLimitsTests(unittest.IsolatedAsyncioTestCase):
@@ -16,8 +17,10 @@ class SubscriptionTierLimitsTests(unittest.IsolatedAsyncioTestCase):
             limits = await resolve_limits("user-free-1")
 
         self.assertEqual(limits["tier"], "free")
-        self.assertEqual(limits["daily_turn_limit"], 5)
-        self.assertEqual(limits["max_tool_calls_per_turn"], 3)
+        self.assertEqual(limits["daily_turn_limit"], settings.TIER_LIMITS["free"]["daily_turn_limit"])
+        self.assertEqual(
+            limits["max_tool_calls_per_turn"], settings.TIER_LIMITS["free"]["max_tool_calls_per_turn"]
+        )
         self.assertEqual(limits["reasoning_effort"], "low")
 
     async def test_resolve_limits_returns_basic_tier(self):
@@ -58,7 +61,7 @@ class SubscriptionTierLimitsTests(unittest.IsolatedAsyncioTestCase):
             limits = await resolve_limits("user-err-1")
 
         self.assertEqual(limits["tier"], "free")
-        self.assertEqual(limits["daily_turn_limit"], 5)
+        self.assertEqual(limits["daily_turn_limit"], settings.TIER_LIMITS["free"]["daily_turn_limit"])
 
     async def test_agent_wrapper_enforces_daily_turn_limit_without_running_graph(self):
         """When count_turns_today >= daily_turn_limit, agent_wrapper should return status='limit_reached'
