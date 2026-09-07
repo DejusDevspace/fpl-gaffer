@@ -16,6 +16,11 @@ class UserTeamInfoInput(BaseModel):
     gameweek: int = Field(..., description="The upcoming/current gameweek number from graph context.")
 
 
+class UserGameweekResultsInput(BaseModel):
+    manager_id: int = Field(..., description="The user's FPL manager ID.")
+    gameweek: int = Field(..., description="The gameweek to retrieve results for.")
+
+
 class TransferHistoryInput(BaseModel):
     manager_id: int = Field(..., description="The user's FPL manager ID.")
 
@@ -49,6 +54,15 @@ async def get_user_team_info(manager_id: int, gameweek: int) -> Dict | None:
         return await team_manager.extract_team_data()
     except Exception as e:
         return tool_error(logger, "get_user_team_info", e)
+
+
+async def get_user_gameweek_results(manager_id: int, gameweek: int) -> Dict | None:
+    """Implementation for get_user_gameweek_results_tool. Kept importable for tests."""
+    try:
+        team_manager = FPLTeamDataManger(FPLOfficialAPIClient(), manager_id, gameweek)
+        return await team_manager.extract_team_data()
+    except Exception as e:
+        return tool_error(logger, "get_user_gameweek_results", e)
 
 
 async def get_user_transfer_history(manager_id: int) -> Dict:
@@ -86,9 +100,16 @@ async def get_user_team_info_tool(manager_id: int, gameweek: int) -> Dict | None
     """Get the user's current squad: starting XI, bench, captain/vice-captain, money in the bank,
     squad value, and this gameweek's transfer cost. Use this whenever you need to know what the
     user actually owns before suggesting transfers, captaincy, or lineup changes. Always pass the
-    current gameweek number from context - this tool automatically looks at the last completed
-    gameweek's picks internally."""
+    current gameweek number from context."""
     return await get_user_team_info(manager_id, gameweek)
+
+
+@tool("get_user_gameweek_results_tool", args_schema=UserGameweekResultsInput)
+async def get_user_gameweek_results_tool(manager_id: int, gameweek: int) -> Dict | None:
+    """Get the user's team performance, squad picks, points, rank, and chip for a specific past or completed
+    gameweek. Use this when reviewing how the user performed in a specific completed gameweek or checking exact
+    past gameweek results."""
+    return await get_user_gameweek_results(manager_id, gameweek)
 
 
 @tool("get_user_transfer_history_tool", args_schema=TransferHistoryInput)

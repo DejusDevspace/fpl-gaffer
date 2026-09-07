@@ -15,6 +15,7 @@ from fpl_gaffer.tools.news import get_expert_tips_tool, news_search_tool
 from fpl_gaffer.tools.user import (
     get_league_standings_tool,
     get_user_captain_history_tool,
+    get_user_gameweek_results_tool,
     get_user_team_info_tool,
     get_user_transfer_history_tool,
 )
@@ -23,6 +24,7 @@ TOOLS: List[BaseTool] = [
     news_search_tool,
     get_expert_tips_tool,
     get_user_team_info_tool,
+    get_user_gameweek_results_tool,
     get_user_transfer_history_tool,
     get_user_captain_history_tool,
     get_league_standings_tool,
