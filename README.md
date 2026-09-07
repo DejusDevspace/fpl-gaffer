@@ -77,6 +77,7 @@ All tools use `@tool` decorators with Pydantic input schemas. The model decides 
 | `news_search_tool`                 | Search FPL news, injuries, press conferences            |
 | `get_expert_tips_tool`             | Scout/pundit consensus from curated expert sources      |
 | `get_user_team_info_tool`          | Squad, transfers, budget, captain picks                 |
+| `get_user_gameweek_results_tool`   | Team performance, picks, and points for a specific GW   |
 | `get_user_transfer_history_tool`   | Transfer history for the current season                 |
 | `get_user_captain_history_tool`    | Captain pick trends over recent gameweeks               |
 | `get_league_standings_tool`        | Mini-league or overall league standings                 |
