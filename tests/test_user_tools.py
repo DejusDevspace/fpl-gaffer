@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from fpl_gaffer.tools.fpl import get_players_by_position
 from fpl_gaffer.tools.news import news_search
-from fpl_gaffer.tools.user import get_user_team_info
+from fpl_gaffer.tools.user import get_user_gameweek_results, get_user_team_info
 
 
 class UserToolTests(unittest.IsolatedAsyncioTestCase):
@@ -53,6 +53,37 @@ class UserToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result, {"error": "unavailable"})
         self.assertNotIn("503", str(result))
         self.assertNotIn("secret", str(result))
+
+    async def test_user_gameweek_results_uses_exact_gameweek(self):
+        team_manager = Mock()
+        team_manager.extract_team_data = AsyncMock(
+            return_value={"manager_id": 123, "gameweek": 4, "points": 65}
+        )
+
+        with patch(
+            "fpl_gaffer.tools.user.FPLTeamDataManger",
+            return_value=team_manager,
+        ) as manager_cls:
+            result = await get_user_gameweek_results(manager_id=123, gameweek=4)
+
+        manager_cls.assert_called_once()
+        _, manager_id, requested_gw = manager_cls.call_args.args
+        self.assertEqual(manager_id, 123)
+        self.assertEqual(requested_gw, 4)
+        self.assertEqual(result, {"manager_id": 123, "gameweek": 4, "points": 65})
+
+    async def test_user_gameweek_results_returns_generic_error_no_leak(self):
+        team_manager = Mock()
+        team_manager.extract_team_data = AsyncMock(side_effect=RuntimeError("internal API 500 error"))
+
+        with patch(
+            "fpl_gaffer.tools.user.FPLTeamDataManger",
+            return_value=team_manager,
+        ):
+            result = await get_user_gameweek_results(manager_id=123, gameweek=4)
+
+        self.assertEqual(result, {"error": "unavailable"})
+        self.assertNotIn("500", str(result))
 
 
 class FPLToolErrorTests(unittest.IsolatedAsyncioTestCase):
